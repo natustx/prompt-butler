@@ -16,3 +16,25 @@ tasks:
       - uv venv
       - uv pip install -r workflow/requirements.txt
       - echo "Project setup complete."
+  
+  # Backend tasks
+  backend:setup:
+    desc: Setup backend virtual environment and install dependencies
+    dir: backend
+    cmds:
+      - python3 -m venv venv
+      - ./venv/bin/pip install --upgrade pip
+      - ./venv/bin/pip install -e .
+      - ./venv/bin/pip install -e ".[dev]"
+      - echo "Backend setup complete"
+  
+  backend:dev:
+    desc: Start backend development server
+    dir: backend
+    cmds:
+      - ./venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+  
+  dev:
+    desc: Start all development servers
+    deps:
+      - backend:dev
