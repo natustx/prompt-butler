@@ -87,10 +87,12 @@
 The general workflow for coding is:
 
 1. Read the task details in taskmaster and any relevant files
-2. Plan the changes
-3. Write the code
-4. Run the quality checks
-5. Fix any linting or test errors immediately
-6. Confirm the task is complete with the user BEFORE marking the task as done in taskmaster
-7. Mark the task as done in taskmaster
-8. Update documentation
+2. Mark the task as "in progress" in taskmaster
+3. Plan the changes
+4. Write the code
+5. Run the quality checks
+6. Fix any linting or test errors immediately
+7. Mark the task as "review" in taskmaster
+8. Ask the user for feedback on the changes, and to confirm when done
+9.  Mark the task as done in taskmaster
+10. Update documentation

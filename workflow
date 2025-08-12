@@ -1,1 +1,1 @@
-../monorepo/monorepo/workflow
+../../monorepo/monorepo/workflow
