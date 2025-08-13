@@ -1,4 +1,4 @@
-import { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
+import type { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -14,7 +14,17 @@ async function handleResponse<T>(response: Response): Promise<T> {
     let message = `Request failed with status ${response.status}`;
     try {
       const error = await response.json();
-      message = error.detail || message;
+      // Handle different error formats from FastAPI
+      if (typeof error.detail === 'string') {
+        message = error.detail;
+      } else if (Array.isArray(error.detail)) {
+        // FastAPI validation errors
+        message = error.detail.map((e: any) => e.msg || e.message).join(', ');
+      } else if (error.detail && typeof error.detail === 'object') {
+        message = JSON.stringify(error.detail);
+      } else if (error.message) {
+        message = error.message;
+      }
     } catch {
       // Use default message if JSON parsing fails
     }

@@ -7,13 +7,15 @@
 
 ## Coding Instructions
 
+### IMPORTANT Instructions
+- IMPORTANT: Do not run any servers directly, rather tell the user to run servers for testing.
+
 ### General Instructions
 - Your most important job is to manage your own context. Always read any relevant files BEFORE planning changes.
 - When updating documentation, keep updates concise and on point to prevent bloat.
 - Write code following KISS, YAGNI, and DRY principles.
 - When in doubt follow proven best practices for implementation.
 - Do not commit to git without user approval.
-- Do not run any servers, rather tell the user to run servers for testing.
 - Always consider industry standard libraries/frameworks first over custom implementations.
 - Never mock anything (other than tests). Never use placeholders. Never omit code.
 - Apply SOLID principles where relevant. Use modern framework features rather than reinventing solutions.

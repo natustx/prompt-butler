@@ -16,7 +16,7 @@ tasks:
       - uv venv
       - uv pip install -r workflow/requirements.txt
       - echo "Project setup complete."
-  
+
   # Backend tasks
   backend:setup:
     desc: Setup backend virtual environment and install dependencies
@@ -26,7 +26,7 @@ tasks:
       - uv pip install -e .
       - uv pip install -e ".[dev]"
       - echo "Backend setup complete"
-  
+
   backend:dev:
     desc: Start backend development server
     dir: backend
@@ -34,8 +34,30 @@ tasks:
       - backend:setup
     cmds:
       - ../.venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
-  
-  dev:
-    desc: Start all development servers
+
+  frontend:setup:
+    desc: Setup frontend and install dependencies
+    dir: frontend
+    cmds:
+      - npm install
+      - echo "Frontend setup complete"
+
+  frontend:dev:
+    desc: Start frontend development server
+    dir: frontend
     deps:
-      - backend:dev
+      - frontend:setup
+    cmds:
+      - npm run dev
+
+  dev:
+    desc: Start all development servers in parallel
+    deps:
+      - backend:setup
+      - frontend:setup
+    cmds:
+      - |
+        trap 'kill 0' EXIT
+        task backend:dev &
+        task frontend:dev &
+        wait
