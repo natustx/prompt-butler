@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Light mode colors */
+:root {
+  --bg-primary: theme(colors.white);
+  --bg-secondary: theme(colors.gray.50);
+  --bg-tertiary: theme(colors.gray.100);
+  --text-primary: theme(colors.gray.900);
+  --text-secondary: theme(colors.gray.700);
+  --text-tertiary: theme(colors.gray.600);
+  --border-primary: theme(colors.gray.200);
+  --border-secondary: theme(colors.gray.300);
+}
+
+/* Dark mode colors */
+.dark {
+  --bg-primary: theme(colors.gray.800);
+  --bg-secondary: theme(colors.gray.900);
+  --bg-tertiary: theme(colors.gray.700);
+  --text-primary: theme(colors.white);
+  --text-secondary: theme(colors.gray.300);
+  --text-tertiary: theme(colors.gray.400);
+  --border-primary: theme(colors.gray.700);
+  --border-secondary: theme(colors.gray.600);
+}
+
+/* Apply custom properties */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }

@@ -1,4 +1,10 @@
+# Local files
 obsidian/*
+
+# Taskmaster
+.taskmaster/tasks/*
+.taskmaster/state.json
+tasks/
 
 # Logs
 logs
@@ -22,6 +28,4 @@ node_modules/
 # OS specific
 .DS_Store
 
-# Task files
-# tasks.json
-# tasks/ 
+
