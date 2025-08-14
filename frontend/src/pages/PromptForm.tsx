@@ -1,8 +1,9 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, AlertCircle } from 'lucide-react';
 import { usePrompt } from '../hooks/usePrompt';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { TagInput } from '../components/TagInput';
 import type { PromptCreate, PromptUpdate } from '../types/prompt';
 
 interface FormData {
@@ -10,6 +11,7 @@ interface FormData {
   description: string;
   system_prompt: string;
   user_prompt: string;
+  tags: string[];
 }
 
 interface FormErrors {
@@ -30,6 +32,7 @@ export function PromptForm() {
     description: '',
     system_prompt: '',
     user_prompt: '',
+    tags: [],
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -42,6 +45,7 @@ export function PromptForm() {
         description: prompt.description || '',
         system_prompt: prompt.system_prompt,
         user_prompt: prompt.user_prompt || '',
+        tags: prompt.tags || [],
       });
       setHasChanges(false);
     }
@@ -73,6 +77,11 @@ export function PromptForm() {
     }
   };
 
+  const handleTagsChange = (tags: string[]) => {
+    setFormData(prev => ({ ...prev, tags }));
+    setHasChanges(true);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -86,6 +95,7 @@ export function PromptForm() {
           description: formData.description || undefined,
           system_prompt: formData.system_prompt,
           user_prompt: formData.user_prompt || undefined,
+          tags: formData.tags.length > 0 ? formData.tags : undefined,
         };
         await updatePrompt(decodedName, updateData);
       } else {
@@ -94,6 +104,7 @@ export function PromptForm() {
           description: formData.description.trim() || undefined,
           system_prompt: formData.system_prompt,
           user_prompt: formData.user_prompt.trim() || undefined,
+          tags: formData.tags.length > 0 ? formData.tags : undefined,
         };
         await createPrompt(createData);
       }
@@ -193,6 +204,17 @@ export function PromptForm() {
                 rows={4}
                 className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary resize-vertical"
                 placeholder="Describe what this prompt does..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-primary mb-2">
+                Tags
+              </label>
+              <TagInput
+                tags={formData.tags}
+                onChange={handleTagsChange}
+                placeholder="Add tags and press Enter..."
               />
             </div>
 

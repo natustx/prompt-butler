@@ -36,6 +36,7 @@ async def create_prompt(prompt_data: PromptCreate):
         description=prompt_data.description or '',
         system_prompt=prompt_data.system_prompt,
         user_prompt=prompt_data.user_prompt or '',
+        tags=prompt_data.tags or [],
     )
 
     storage_service.save_prompt(prompt)

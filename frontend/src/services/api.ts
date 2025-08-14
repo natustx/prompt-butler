@@ -3,8 +3,11 @@ import type { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  public status: number;
+  
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
     this.name = 'ApiError';
   }
 }

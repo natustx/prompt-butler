@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -9,6 +9,7 @@ class Prompt(BaseModel):
     description: str = Field('', description="Brief description of the prompt's purpose")
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: str = Field('', description='User prompt template or example')
+    tags: List[str] = Field(default_factory=list, description='List of tags for categorizing the prompt')
 
     @field_validator('name')
     @classmethod
@@ -25,6 +26,7 @@ class Prompt(BaseModel):
                     'description': 'Reviews code for best practices and potential issues',
                     'system_prompt': 'You are an expert code reviewer. Analyze code for bugs and best practices.',
                     'user_prompt': 'Please review the following code:\n\n{code}',
+                    'tags': ['code', 'review', 'development'],
                 }
             ]
         }
@@ -36,6 +38,7 @@ class PromptCreate(BaseModel):
     description: Optional[str] = Field('', description="Brief description of the prompt's purpose")
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: Optional[str] = Field('', description='User prompt template or example')
+    tags: Optional[List[str]] = Field(default_factory=list, description='List of tags for categorizing the prompt')
 
     @field_validator('name')
     @classmethod
@@ -49,6 +52,7 @@ class PromptUpdate(BaseModel):
     description: Optional[str] = Field(None, description="Brief description of the prompt's purpose")
     system_prompt: Optional[str] = Field(None, description='System prompt to set AI context and behavior')
     user_prompt: Optional[str] = Field(None, description='User prompt template or example')
+    tags: Optional[List[str]] = Field(None, description='List of tags for categorizing the prompt')
 
 
 class PromptResponse(Prompt):
