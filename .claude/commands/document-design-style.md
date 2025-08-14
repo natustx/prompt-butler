@@ -6,30 +6,38 @@ You are creating/updating a design style documentation page. Follow these steps:
 
 1. **Get the design style name** from the user (e.g., "minimalist", "glassmorphism", "art deco", etc.)
 
-2. **Create the file structure** at `designs/[StyleName].md` with this format:
+2. **Create the file structure** at `obsidian/designs/[StyleName].md` with this format:
    ```markdown
    ---
    class: Design Style
    thumbnail: [will be added from first screenshot]
    summary: [Brief description of the style's key characteristics]
+   status: pending
    ---
-   
+
    # Screenshots
    [4 screenshot images in a row]
-   
+
    # Websites
-   
+
    ### [Website Name]
    [URL]
    [Brief description of how it uses this style]
    ```
 
-3. **Search for screenshots using DuckDuckGo image search via Playwright MCP**:
-   - Use search query: "[style name] web design examples website screenshots"
-   - Navigate to DuckDuckGo Images
-   - Click on 4-5 preview images to get larger versions
+3. **Search for screenshots using agent-playwright-navigator**:
+   - ALWAYS use the Task tool with subagent_type: "playwright-navigator"
+   - Navigate to DuckDuckGo Images ONLY
+   - Primary search query: "[style name] website example"
+   - Quality check: Ensure captured images show actual website interfaces (navigation bars, headers, content sections, not profile photos or logos)
+   - If first attempt yields non-website images, retry with fallback searches:
+     - "[style name] web design homepage"
+     - "[style name] website interface screenshot"
+     - "[style name] web design examples"
+   - Click on 4-5 preview images that clearly show website screenshots to get larger versions
    - Extract the image URLs from the larger previews
    - Add these as inline images in the Screenshots section
+   - Maximum 2 search attempts before manual intervention needed
 
 4. **Search for example websites**:
    - Use web search to find 5-8 real websites that exemplify this design style
