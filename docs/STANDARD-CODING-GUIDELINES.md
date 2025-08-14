@@ -1,0 +1,1 @@
+../../../monorepo/monorepo/docs/STANDARD-CODING-GUIDELINES.md
