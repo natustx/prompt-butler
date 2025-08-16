@@ -1,5 +1,6 @@
 import { useState, useCallback, type KeyboardEvent, type FocusEvent } from 'react';
 import { TagPill } from './TagPill';
+import { Input } from '@/components/ui/input';
 
 interface TagInputProps {
   tags: string[];
@@ -40,7 +41,7 @@ export function TagInput({ tags, onChange, placeholder = 'Add tags...', classNam
 
   return (
     <div className="space-y-2">
-      <input
+      <Input
         type="text"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}

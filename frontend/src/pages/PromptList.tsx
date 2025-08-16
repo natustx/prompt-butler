@@ -1,36 +1,13 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit, Trash2, AlertCircle } from 'lucide-react';
 import { usePrompts } from '../hooks/usePrompts';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { TagPill } from '../components/TagPill';
+import { DeletePromptDialog } from '../components/DeletePromptDialog';
 
 export function PromptList() {
   const { prompts, loading, error, refetch, deletePrompt } = usePrompts();
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; promptName: string }>({
-    isOpen: false,
-    promptName: '',
-  });
-
-  const handleDeleteClick = (promptName: string) => {
-    setDeleteModal({ isOpen: true, promptName });
-  };
-
-  const handleDeleteConfirm = async () => {
-    try {
-      await deletePrompt(deleteModal.promptName);
-      setDeleteModal({ isOpen: false, promptName: '' });
-    } catch (error) {
-      console.error('Failed to delete prompt:', error);
-      throw error;
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModal({ isOpen: false, promptName: '' });
-  };
 
   if (loading) {
     return (
@@ -134,13 +111,17 @@ export function PromptList() {
                         >
                           <Edit className="h-4 w-4" />
                         </Link>
-                        <button
-                          onClick={() => handleDeleteClick(prompt.name)}
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                          title="Delete prompt"
+                        <DeletePromptDialog 
+                          promptName={prompt.name} 
+                          onDelete={deletePrompt}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                          <button
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                            title="Delete prompt"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </DeletePromptDialog>
                       </div>
                     </td>
                   </tr>
@@ -150,14 +131,6 @@ export function PromptList() {
           </div>
         </div>
       </div>
-
-      <DeleteConfirmModal
-        isOpen={deleteModal.isOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        itemName={deleteModal.promptName}
-        itemType="prompt"
-      />
     </>
   );
 }

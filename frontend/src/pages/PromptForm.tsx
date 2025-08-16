@@ -4,6 +4,9 @@ import { Save, AlertCircle } from 'lucide-react';
 import { usePrompt } from '../hooks/usePrompt';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { TagInput } from '../components/TagInput';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import type { PromptCreate, PromptUpdate } from '../types/prompt';
 
 interface FormData {
@@ -170,16 +173,16 @@ export function PromptForm() {
           {/* Left Side - Basic Info */}
           <div className="p-6 space-y-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
                 Name *
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 disabled={isEditing || saving}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary ${
+                className={`w-full bg-primary text-primary ${
                   errors.name ? 'border-red-300' : 'border-secondary'
                 } disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 placeholder="Enter prompt name"
@@ -193,24 +196,24 @@ export function PromptForm() {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="description" className="block text-sm font-medium text-primary mb-2">
                 Description
-              </label>
-              <textarea
+              </Label>
+              <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 disabled={saving}
                 rows={4}
-                className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary resize-vertical"
+                className="w-full bg-primary text-primary border-secondary resize-vertical"
                 placeholder="Describe what this prompt does..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-primary mb-2">
+              <Label className="block text-sm font-medium text-primary mb-2">
                 Tags
-              </label>
+              </Label>
               <TagInput
                 tags={formData.tags}
                 onChange={handleTagsChange}
@@ -234,16 +237,16 @@ export function PromptForm() {
           {/* Right Side - Prompt Content */}
           <div className="p-6 space-y-6">
             <div>
-              <label htmlFor="system_prompt" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="system_prompt" className="block text-sm font-medium text-primary mb-2">
                 System Prompt *
-              </label>
-              <textarea
+              </Label>
+              <Textarea
                 id="system_prompt"
                 value={formData.system_prompt}
                 onChange={(e) => handleInputChange('system_prompt', e.target.value)}
                 disabled={saving}
                 rows={8}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary font-mono text-sm resize-vertical ${
+                className={`w-full bg-primary text-primary font-mono text-sm resize-vertical ${
                   errors.system_prompt ? 'border-red-300' : 'border-secondary'
                 }`}
                 placeholder="You are a helpful assistant..."
@@ -254,16 +257,16 @@ export function PromptForm() {
             </div>
 
             <div>
-              <label htmlFor="user_prompt" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="user_prompt" className="block text-sm font-medium text-primary mb-2">
                 User Prompt
-              </label>
-              <textarea
+              </Label>
+              <Textarea
                 id="user_prompt"
                 value={formData.user_prompt}
                 onChange={(e) => handleInputChange('user_prompt', e.target.value)}
                 disabled={saving}
                 rows={6}
-                className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary font-mono text-sm resize-vertical"
+                className="w-full bg-primary text-primary border-secondary font-mono text-sm resize-vertical"
                 placeholder="Enter user prompt template..."
               />
             </div>
