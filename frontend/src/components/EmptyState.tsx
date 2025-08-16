@@ -1,5 +1,6 @@
 import { FileText, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
   title?: string;
@@ -28,13 +29,12 @@ export function EmptyState({
         {description}
       </p>
       
-      <Link
-        to={actionLink}
-        className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
-      >
-        <Plus className="h-5 w-5" />
-        <span>{actionText}</span>
-      </Link>
+      <Button asChild>
+        <Link to={actionLink}>
+          <Plus className="h-4 w-4 mr-2" />
+          {actionText}
+        </Link>
+      </Button>
     </div>
   );
 }

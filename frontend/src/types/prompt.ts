@@ -3,6 +3,7 @@ export interface Prompt {
   description: string;
   system_prompt: string;
   user_prompt: string;
+  tags: string[];
 }
 
 export interface PromptCreate {
@@ -10,12 +11,14 @@ export interface PromptCreate {
   description?: string;
   system_prompt: string;
   user_prompt?: string;
+  tags?: string[];
 }
 
 export interface PromptUpdate {
   description?: string;
   system_prompt?: string;
   user_prompt?: string;
+  tags?: string[];
 }
 
 export interface ErrorResponse {

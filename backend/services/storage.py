@@ -26,21 +26,22 @@ class StorageService:
         sanitized_name = self.sanitize_filename(name)
         return self.prompts_dir / f'{sanitized_name}.yaml'
 
-    def list_prompts(self) -> list[str]:
+    def list_prompts(self) -> list[Prompt]:
         try:
             yaml_files = list(self.prompts_dir.glob('*.yaml'))
-            prompt_names = []
+            prompts = []
 
             for file_path in yaml_files:
                 try:
                     with open(file_path, encoding='utf-8') as f:
                         data = yaml.safe_load(f)
                         if data and isinstance(data, dict) and 'name' in data:
-                            prompt_names.append(data['name'])
+                            prompt = Prompt(**data)
+                            prompts.append(prompt)
                 except (OSError, yaml.YAMLError):
                     continue
 
-            return sorted(prompt_names)
+            return sorted(prompts, key=lambda p: p.name)
         except Exception as e:
             raise StorageError(f'Failed to list prompts: {str(e)}') from e
 

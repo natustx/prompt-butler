@@ -3,8 +3,11 @@ import type { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  public status: number;
+  
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
     this.name = 'ApiError';
   }
 }
@@ -19,7 +22,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
         message = error.detail;
       } else if (Array.isArray(error.detail)) {
         // FastAPI validation errors
-        message = error.detail.map((e: any) => e.msg || e.message).join(', ');
+        message = error.detail.map((e: { msg?: string; message?: string }) => e.msg || e.message || 'Validation error').join(', ');
       } else if (error.detail && typeof error.detail === 'object') {
         message = JSON.stringify(error.detail);
       } else if (error.message) {
@@ -41,9 +44,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 export const promptApi = {
   // List all prompts
-  async listPrompts(): Promise<string[]> {
+  async listPrompts(): Promise<Prompt[]> {
     const response = await fetch(`${API_BASE_URL}/api/prompts/`);
-    return handleResponse<string[]>(response);
+    return handleResponse<Prompt[]>(response);
   },
 
   // Get a specific prompt

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { promptApi, ApiError } from '../services/api';
+import { promptApi } from '../services/api';
+import { handleApiError, extractErrorMessage } from '../utils/errorHandler';
 import type { Prompt } from '../types/prompt';
 
 interface UsePromptsState {
@@ -20,25 +21,10 @@ export function usePrompts(): UsePromptsState {
       setLoading(true);
       setError(null);
       
-      const promptNames = await promptApi.listPrompts();
-      
-      if (promptNames.length === 0) {
-        setPrompts([]);
-        return;
-      }
-      
-      const promptDetails = await Promise.all(
-        promptNames.map(name => promptApi.getPrompt(name))
-      );
-      
-      setPrompts(promptDetails);
+      const prompts = await promptApi.listPrompts();
+      setPrompts(prompts);
     } catch (err) {
-      console.error('Failed to fetch prompts:', err);
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Failed to load prompts');
-      }
+      handleApiError(err, 'fetch prompts', setError);
     } finally {
       setLoading(false);
     }
@@ -49,12 +35,9 @@ export function usePrompts(): UsePromptsState {
       await promptApi.deletePrompt(name);
       setPrompts(prevPrompts => prevPrompts.filter(p => p.name !== name));
     } catch (err) {
+      const errorMessage = extractErrorMessage(err, 'Failed to delete prompt');
       console.error('Failed to delete prompt:', err);
-      if (err instanceof ApiError) {
-        throw new Error(err.message);
-      } else {
-        throw new Error('Failed to delete prompt');
-      }
+      throw new Error(errorMessage);
     }
   }, []);
 
