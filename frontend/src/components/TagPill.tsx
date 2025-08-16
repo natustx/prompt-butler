@@ -1,4 +1,6 @@
 import { X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface TagPillProps {
   tag: string;
@@ -8,18 +10,24 @@ interface TagPillProps {
 
 export function TagPill({ tag, onRemove, className = '' }: TagPillProps) {
   return (
-    <span className={className}>
+    <Badge 
+      variant="secondary" 
+      className={cn(
+        "inline-flex items-center gap-1 bg-tertiary text-secondary",
+        className
+      )}
+    >
       <span className="truncate">{tag}</span>
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="flex-shrink-0 p-0.5 hover:bg-tertiary rounded-full transition-colors"
+          className="flex-shrink-0 p-0.5 hover:bg-secondary/50 rounded-full transition-colors ml-1"
           aria-label={`Remove tag: ${tag}`}
         >
           <X className="h-3 w-3" />
         </button>
       )}
-    </span>
+    </Badge>
   );
 }

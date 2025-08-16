@@ -1,5 +1,7 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, AlertCircle } from 'lucide-react';
 import { usePrompt } from '../hooks/usePrompt';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -7,114 +9,73 @@ import { TagInput } from '../components/TagInput';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { handleApiError } from '../utils/errorHandler';
+import { promptFormSchema, type PromptFormInput } from '../schemas/prompt';
 import type { PromptCreate, PromptUpdate } from '../types/prompt';
-
-interface FormData {
-  name: string;
-  description: string;
-  system_prompt: string;
-  user_prompt: string;
-  tags: string[];
-}
-
-interface FormErrors {
-  name?: string;
-  system_prompt?: string;
-}
 
 export function PromptForm() {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(name);
   const decodedName = name ? decodeURIComponent(name) : undefined;
-  
-  const { prompt, loading, error, saving, saveError, createPrompt, updatePrompt } = usePrompt(decodedName);
-  
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    description: '',
-    system_prompt: '',
-    user_prompt: '',
-    tags: [],
+
+  const { prompt, loading, error, saveError, createPrompt, updatePrompt } = usePrompt(decodedName);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const form = useForm<PromptFormInput>({
+    resolver: zodResolver(promptFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      system_prompt: '',
+      user_prompt: '',
+      tags: [],
+    },
   });
-  
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [hasChanges, setHasChanges] = useState(false);
+
+  const { control, register, handleSubmit, formState, reset } = form;
+  const { errors, isDirty, isSubmitting } = formState;
 
   useEffect(() => {
     if (isEditing && prompt) {
-      setFormData({
+      reset({
         name: prompt.name,
         description: prompt.description || '',
         system_prompt: prompt.system_prompt,
         user_prompt: prompt.user_prompt || '',
         tags: prompt.tags || [],
       });
-      setHasChanges(false);
     }
-  }, [prompt, isEditing]);
+  }, [prompt, isEditing, reset]);
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.name)) {
-      newErrors.name = 'Name must contain only letters, numbers, underscores, and hyphens (no spaces)';
-    }
-
-    if (!formData.system_prompt.trim()) {
-      newErrors.system_prompt = 'System prompt is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
-    
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleTagsChange = (tags: string[]) => {
-    setFormData(prev => ({ ...prev, tags }));
-    setHasChanges(true);
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data: PromptFormInput) => {
     try {
+      setSubmitError(null);
+      
       if (isEditing && decodedName) {
         const updateData: PromptUpdate = {
-          description: formData.description || undefined,
-          system_prompt: formData.system_prompt,
-          user_prompt: formData.user_prompt || undefined,
-          tags: formData.tags.length > 0 ? formData.tags : undefined,
+          description: data.description.trim() || undefined,
+          system_prompt: data.system_prompt,
+          user_prompt: data.user_prompt.trim() || undefined,
+          tags: data.tags.length > 0 ? data.tags : undefined,
         };
         await updatePrompt(decodedName, updateData);
       } else {
         const createData: PromptCreate = {
-          name: formData.name,
-          description: formData.description.trim() || undefined,
-          system_prompt: formData.system_prompt,
-          user_prompt: formData.user_prompt.trim() || undefined,
-          tags: formData.tags.length > 0 ? formData.tags : undefined,
+          name: data.name,
+          description: data.description.trim() || undefined,
+          system_prompt: data.system_prompt,
+          user_prompt: data.user_prompt.trim() || undefined,
+          tags: data.tags.length > 0 ? data.tags : undefined,
         };
         await createPrompt(createData);
       }
-      
+
       navigate('/');
     } catch (error) {
-      console.error('Failed to save prompt:', error);
+      handleApiError(error, 'save prompt', setSubmitError);
     }
   };
 
@@ -128,10 +89,38 @@ export function PromptForm() {
         <h1 className="text-2xl font-bold text-primary">
           {isEditing ? 'Edit Prompt' : 'New Prompt'}
         </h1>
-        <div className="bg-primary shadow rounded-lg p-8 flex items-center justify-center">
-          <div className="flex items-center space-x-3">
-            <LoadingSpinner size="md" />
-            <span className="text-secondary">Loading prompt...</span>
+        <div className="bg-primary shadow rounded-lg overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-secondary">
+            {/* Left Side Skeleton */}
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            {/* Right Side Skeleton */}
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-tertiary border-t border-secondary flex justify-end space-x-3">
+            <Skeleton className="h-10 w-16" />
+            <Skeleton className="h-10 w-20" />
           </div>
         </div>
       </div>
@@ -145,13 +134,15 @@ export function PromptForm() {
           {isEditing ? 'Edit Prompt' : 'New Prompt'}
         </h1>
         <div className="bg-primary shadow rounded-lg p-6">
-          <div className="flex items-center space-x-3 text-red-600">
-            <AlertCircle className="h-5 w-5" />
-            <span>Error loading prompt: {error}</span>
-          </div>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Error loading prompt: {error}
+            </AlertDescription>
+          </Alert>
           <button
             onClick={handleCancel}
-            className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
           >
             Go Back
           </button>
@@ -168,7 +159,7 @@ export function PromptForm() {
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-primary shadow rounded-lg overflow-hidden">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-primary shadow rounded-lg overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-secondary">
           {/* Left Side - Basic Info */}
           <div className="p-6 space-y-6">
@@ -179,16 +170,15 @@ export function PromptForm() {
               <Input
                 type="text"
                 id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                disabled={isEditing || saving}
+                {...register('name')}
+                disabled={isEditing || isSubmitting}
                 className={`w-full bg-primary text-primary ${
                   errors.name ? 'border-red-300' : 'border-secondary'
                 } disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 placeholder="Enter prompt name"
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
               )}
               {isEditing && (
                 <p className="mt-1 text-sm text-tertiary">Name cannot be changed when editing</p>
@@ -201,9 +191,8 @@ export function PromptForm() {
               </Label>
               <Textarea
                 id="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                disabled={saving}
+                {...register('description')}
+                disabled={isSubmitting}
                 rows={4}
                 className="w-full bg-primary text-primary border-secondary resize-vertical"
                 placeholder="Describe what this prompt does..."
@@ -214,23 +203,30 @@ export function PromptForm() {
               <Label className="block text-sm font-medium text-primary mb-2">
                 Tags
               </Label>
-              <TagInput
-                tags={formData.tags}
-                onChange={handleTagsChange}
-                placeholder="Add tags and press Enter..."
-                className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary"
-                tagClassName="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary text-sm rounded-full"
-                disabled={saving}
+              <Controller
+                name="tags"
+                control={control}
+                render={({ field }) => (
+                  <TagInput
+                    {...field}
+                    tags={field.value}
+                    onChange={field.onChange}
+                    placeholder="Add tags and press Enter..."
+                    className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary"
+                    tagClassName="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary text-sm rounded-full"
+                    disabled={isSubmitting}
+                  />
+                )}
               />
             </div>
 
-            {saveError && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-red-600 text-sm">{saveError}</span>
-                </div>
-              </div>
+            {(saveError || submitError) && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {saveError || submitError}
+                </AlertDescription>
+              </Alert>
             )}
           </div>
 
@@ -242,9 +238,8 @@ export function PromptForm() {
               </Label>
               <Textarea
                 id="system_prompt"
-                value={formData.system_prompt}
-                onChange={(e) => handleInputChange('system_prompt', e.target.value)}
-                disabled={saving}
+                {...register('system_prompt')}
+                disabled={isSubmitting}
                 rows={8}
                 className={`w-full bg-primary text-primary font-mono text-sm resize-vertical ${
                   errors.system_prompt ? 'border-red-300' : 'border-secondary'
@@ -252,7 +247,7 @@ export function PromptForm() {
                 placeholder="You are a helpful assistant..."
               />
               {errors.system_prompt && (
-                <p className="mt-1 text-sm text-red-600">{errors.system_prompt}</p>
+                <p className="mt-1 text-sm text-red-600">{errors.system_prompt.message}</p>
               )}
             </div>
 
@@ -262,9 +257,8 @@ export function PromptForm() {
               </Label>
               <Textarea
                 id="user_prompt"
-                value={formData.user_prompt}
-                onChange={(e) => handleInputChange('user_prompt', e.target.value)}
-                disabled={saving}
+                {...register('user_prompt')}
+                disabled={isSubmitting}
                 rows={6}
                 className="w-full bg-primary text-primary border-secondary font-mono text-sm resize-vertical"
                 placeholder="Enter user prompt template..."
@@ -278,17 +272,17 @@ export function PromptForm() {
           <button
             type="button"
             onClick={handleCancel}
-            disabled={saving}
+            disabled={isSubmitting}
             className="px-4 py-2 text-secondary hover:text-primary border border-secondary hover:bg-primary rounded-md transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={saving || !hasChanges}
+            disabled={isSubmitting || !isDirty}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50 flex items-center space-x-2"
           >
-            {saving ? (
+            {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" />
                 <span>Saving...</span>

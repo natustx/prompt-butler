@@ -95,7 +95,7 @@ export function PromptList() {
                       <div className="flex flex-wrap gap-1">
                         {prompt.tags && prompt.tags.length > 0 ? (
                           prompt.tags.map((tag) => (
-                            <TagPill key={tag} tag={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-tertiary text-secondary text-xs rounded-full" />
+                            <TagPill key={tag} tag={tag} />
                           ))
                         ) : (
                           <span className="text-xs text-tertiary">No tags</span>

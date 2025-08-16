@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
+import { handleApiError } from '../utils/errorHandler';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +24,15 @@ interface DeletePromptDialogProps {
 
 export function DeletePromptDialog({ promptName, onDelete, children }: DeletePromptDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
+      setDeleteError(null);
       await onDelete(promptName);
     } catch (error) {
-      console.error('Failed to delete prompt:', error);
+      handleApiError(error, 'delete prompt', setDeleteError);
     } finally {
       setIsDeleting(false);
     }
@@ -56,6 +60,15 @@ export function DeletePromptDialog({ promptName, onDelete, children }: DeletePro
           <span className="block text-tertiary text-sm mt-2">
             This action cannot be undone.
           </span>
+          
+          {deleteError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {deleteError}
+              </AlertDescription>
+            </Alert>
+          )}
         </AlertDialogDescription>
         <AlertDialogFooter className="space-x-3">
           <AlertDialogCancel className="text-secondary hover:text-primary border-secondary hover:bg-tertiary">

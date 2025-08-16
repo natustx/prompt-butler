@@ -7,7 +7,6 @@ interface UsePromptState {
   prompt: Prompt | null;
   loading: boolean;
   error: string | null;
-  saving: boolean;
   saveError: string | null;
   refetch: () => void;
   createPrompt: (data: PromptCreate) => Promise<Prompt>;
@@ -18,7 +17,6 @@ export function usePrompt(name?: string): UsePromptState {
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const fetchPrompt = useCallback(async () => {
@@ -42,7 +40,6 @@ export function usePrompt(name?: string): UsePromptState {
 
   const createPrompt = useCallback(async (data: PromptCreate): Promise<Prompt> => {
     try {
-      setSaving(true);
       setSaveError(null);
       const newPrompt = await promptApi.createPrompt(data);
       setPrompt(newPrompt);
@@ -50,14 +47,11 @@ export function usePrompt(name?: string): UsePromptState {
     } catch (err) {
       handleApiError(err, 'create prompt', setSaveError);
       throw err;
-    } finally {
-      setSaving(false);
     }
   }, []);
 
   const updatePrompt = useCallback(async (promptName: string, data: PromptUpdate): Promise<Prompt> => {
     try {
-      setSaving(true);
       setSaveError(null);
       const updatedPrompt = await promptApi.updatePrompt(promptName, data);
       setPrompt(updatedPrompt);
@@ -65,8 +59,6 @@ export function usePrompt(name?: string): UsePromptState {
     } catch (err) {
       handleApiError(err, 'update prompt', setSaveError);
       throw err;
-    } finally {
-      setSaving(false);
     }
   }, []);
 
@@ -78,7 +70,6 @@ export function usePrompt(name?: string): UsePromptState {
     prompt,
     loading,
     error,
-    saving,
     saveError,
     refetch: fetchPrompt,
     createPrompt,
