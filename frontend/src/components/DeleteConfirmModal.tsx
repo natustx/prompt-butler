@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Trash2, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Trash2, X, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface DeleteConfirmModalProps {
@@ -18,16 +18,28 @@ export function DeleteConfirmModal({
   itemType = 'prompt'
 }: DeleteConfirmModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset error when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setError(null);
+      setIsDeleting(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
     try {
       setIsDeleting(true);
+      setError(null);
       await onConfirm();
       onClose();
-    } catch (error) {
-      console.error('Delete failed:', error);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete item';
+      setError(errorMessage);
     } finally {
       setIsDeleting(false);
     }
@@ -72,6 +84,15 @@ export function DeleteConfirmModal({
           <p className="text-tertiary text-sm mt-2">
             This action cannot be undone.
           </p>
+          
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                <span className="text-red-600 text-sm">{error}</span>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="flex space-x-3 justify-end">

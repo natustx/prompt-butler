@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { promptApi, ApiError } from '../services/api';
+import { promptApi } from '../services/api';
+import { handleApiError } from '../utils/errorHandler';
 import type { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
 
 interface UsePromptState {
@@ -33,12 +34,7 @@ export function usePrompt(name?: string): UsePromptState {
       const promptData = await promptApi.getPrompt(name);
       setPrompt(promptData);
     } catch (err) {
-      console.error('Failed to fetch prompt:', err);
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Failed to load prompt');
-      }
+      handleApiError(err, 'fetch prompt', setError);
     } finally {
       setLoading(false);
     }
@@ -52,10 +48,8 @@ export function usePrompt(name?: string): UsePromptState {
       setPrompt(newPrompt);
       return newPrompt;
     } catch (err) {
-      console.error('Failed to create prompt:', err);
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to create prompt';
-      setSaveError(errorMessage);
-      throw new Error(errorMessage);
+      handleApiError(err, 'create prompt', setSaveError);
+      throw err;
     } finally {
       setSaving(false);
     }
@@ -69,10 +63,8 @@ export function usePrompt(name?: string): UsePromptState {
       setPrompt(updatedPrompt);
       return updatedPrompt;
     } catch (err) {
-      console.error('Failed to update prompt:', err);
-      const errorMessage = err instanceof ApiError ? err.message : 'Failed to update prompt';
-      setSaveError(errorMessage);
-      throw new Error(errorMessage);
+      handleApiError(err, 'update prompt', setSaveError);
+      throw err;
     } finally {
       setSaving(false);
     }

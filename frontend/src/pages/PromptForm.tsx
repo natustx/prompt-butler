@@ -215,6 +215,9 @@ export function PromptForm() {
                 tags={formData.tags}
                 onChange={handleTagsChange}
                 placeholder="Add tags and press Enter..."
+                className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary"
+                tagClassName="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary text-sm rounded-full"
+                disabled={saving}
               />
             </div>
 

@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type FocusEvent } from 'react';
+import { useState, useCallback, type KeyboardEvent, type FocusEvent } from 'react';
 import { TagPill } from './TagPill';
 
 interface TagInputProps {
@@ -6,22 +6,26 @@ interface TagInputProps {
   onChange: (tags: string[]) => void;
   placeholder?: string;
   className?: string;
+  tagClassName?: string;
+  disabled?: boolean;
 }
 
-export function TagInput({ tags, onChange, placeholder = 'Add tags...', className = '' }: TagInputProps) {
+export function TagInput({ tags, onChange, placeholder = 'Add tags...', className = '', tagClassName = '', disabled = false }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
 
-  const addTag = (tagText: string) => {
+  const addTag = useCallback((tagText: string) => {
+    if (disabled) return;
     const trimmedTag = tagText.trim();
     if (trimmedTag && !tags.includes(trimmedTag)) {
       onChange([...tags, trimmedTag]);
       setInputValue('');
     }
-  };
+  }, [disabled, tags, onChange]);
 
-  const removeTag = (tagToRemove: string) => {
+  const removeTag = useCallback((tagToRemove: string) => {
+    if (disabled) return;
     onChange(tags.filter(tag => tag !== tagToRemove));
-  };
+  }, [disabled, tags, onChange]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -35,7 +39,7 @@ export function TagInput({ tags, onChange, placeholder = 'Add tags...', classNam
   };
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className="space-y-2">
       <input
         type="text"
         value={inputValue}
@@ -43,7 +47,8 @@ export function TagInput({ tags, onChange, placeholder = 'Add tags...', classNam
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className={className}
+        disabled={disabled}
       />
       
       {tags.length > 0 && (
@@ -52,7 +57,8 @@ export function TagInput({ tags, onChange, placeholder = 'Add tags...', classNam
             <TagPill
               key={tag}
               tag={tag}
-              onRemove={() => removeTag(tag)}
+              onRemove={disabled ? undefined : () => removeTag(tag)}
+              className={tagClassName}
             />
           ))}
         </div>

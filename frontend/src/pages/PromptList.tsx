@@ -5,6 +5,7 @@ import { usePrompts } from '../hooks/usePrompts';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import { TagPill } from '../components/TagPill';
 
 export function PromptList() {
   const { prompts, loading, error, refetch, deletePrompt } = usePrompts();
@@ -92,6 +93,9 @@ export function PromptList() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                     Description
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
+                    Tags
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-secondary uppercase tracking-wider">
                     Actions
                   </th>
@@ -108,6 +112,17 @@ export function PromptList() {
                     <td className="px-6 py-4">
                       <div className="text-sm text-secondary max-w-md">
                         {prompt.description || 'No description'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {prompt.tags && prompt.tags.length > 0 ? (
+                          prompt.tags.map((tag) => (
+                            <TagPill key={tag} tag={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-tertiary text-secondary text-xs rounded-full" />
+                          ))
+                        ) : (
+                          <span className="text-xs text-tertiary">No tags</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

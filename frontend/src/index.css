@@ -33,3 +33,7 @@
 .text-tertiary { color: var(--text-tertiary); }
 .border-primary { border-color: var(--border-primary); }
 .border-secondary { border-color: var(--border-secondary); }
+
+/* Placeholder text styling */
+.bg-primary::placeholder { color: var(--text-tertiary); opacity: 1; }
+.text-primary::placeholder { color: var(--text-tertiary); opacity: 1; }

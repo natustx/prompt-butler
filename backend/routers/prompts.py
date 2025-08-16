@@ -7,9 +7,9 @@ from services.storage import PromptNotFoundError, StorageError, storage_service
 router = APIRouter(prefix='/api/prompts', tags=['prompts'], responses={404: {'description': 'Prompt not found'}})
 
 
-@router.get('/', response_model=list[str])
+@router.get('/', response_model=list[PromptResponse])
 async def list_prompts():
-    """List all available prompt names."""
+    """List all available prompts with full details."""
     try:
         return storage_service.list_prompts()
     except StorageError as e:
