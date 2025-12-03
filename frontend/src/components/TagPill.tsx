@@ -13,7 +13,7 @@ export function TagPill({ tag, onRemove, className = '' }: TagPillProps) {
     <Badge 
       variant="secondary" 
       className={cn(
-        "inline-flex items-center gap-1 bg-tertiary text-secondary",
+        "inline-flex items-center gap-1 bg-surface-alt text-muted",
         className
       )}
     >
@@ -22,7 +22,7 @@ export function TagPill({ tag, onRemove, className = '' }: TagPillProps) {
         <button
           type="button"
           onClick={onRemove}
-          className="flex-shrink-0 p-0.5 hover:bg-secondary/50 rounded-full transition-colors ml-1"
+          className="flex-shrink-0 p-0.5 hover:bg-muted-foreground/20 rounded-full transition-colors ml-1"
           aria-label={`Remove tag: ${tag}`}
         >
           <X className="h-3 w-3" />

@@ -17,15 +17,15 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="text-center py-12">
-      <div className="mx-auto w-24 h-24 bg-tertiary rounded-full flex items-center justify-center mb-6">
-        <FileText className="h-12 w-12 text-tertiary" />
+      <div className="mx-auto w-24 h-24 bg-surface-alt rounded-full flex items-center justify-center mb-6">
+        <FileText className="h-12 w-12 text-subtle" />
       </div>
       
-      <h3 className="text-lg font-semibold text-primary mb-2">
+      <h3 className="text-lg font-semibold text-default mb-2">
         {title}
       </h3>
       
-      <p className="text-tertiary mb-8 max-w-md mx-auto">
+      <p className="text-subtle mb-8 max-w-md mx-auto">
         {description}
       </p>
       

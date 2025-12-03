@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { handleApiError } from '../utils/errorHandler';
 import { promptFormSchema, type PromptFormInput } from '../schemas/prompt';
 import type { PromptCreate, PromptUpdate } from '../types/prompt';
@@ -86,11 +87,11 @@ export function PromptForm() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-primary">
+        <h1 className="text-2xl font-bold text-default">
           {isEditing ? 'Edit Prompt' : 'New Prompt'}
         </h1>
-        <div className="bg-primary shadow rounded-lg overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-secondary">
+        <div className="bg-surface shadow rounded-lg overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-strong">
             {/* Left Side Skeleton */}
             <div className="p-6 space-y-6">
               <div className="space-y-2">
@@ -118,7 +119,7 @@ export function PromptForm() {
               </div>
             </div>
           </div>
-          <div className="px-6 py-4 bg-tertiary border-t border-secondary flex justify-end space-x-3">
+          <div className="px-6 py-4 bg-surface-alt border-t border-strong flex justify-end space-x-3">
             <Skeleton className="h-10 w-16" />
             <Skeleton className="h-10 w-20" />
           </div>
@@ -130,22 +131,19 @@ export function PromptForm() {
   if (error) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-primary">
+        <h1 className="text-2xl font-bold text-default">
           {isEditing ? 'Edit Prompt' : 'New Prompt'}
         </h1>
-        <div className="bg-primary shadow rounded-lg p-6">
+        <div className="bg-surface shadow rounded-lg p-6">
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Error loading prompt: {error}
             </AlertDescription>
           </Alert>
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
-          >
+          <Button variant="secondary" onClick={handleCancel}>
             Go Back
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -154,17 +152,17 @@ export function PromptForm() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">
+        <h1 className="text-2xl font-bold text-default">
           {isEditing ? `Edit "${decodedName}"` : 'New Prompt'}
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-primary shadow rounded-lg overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-secondary">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-surface shadow rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-strong">
           {/* Left Side - Basic Info */}
           <div className="p-6 space-y-6">
             <div>
-              <Label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="name" className="block text-sm font-medium text-default mb-2">
                 Name *
               </Label>
               <Input
@@ -172,8 +170,8 @@ export function PromptForm() {
                 id="name"
                 {...register('name')}
                 disabled={isEditing || isSubmitting}
-                className={`w-full bg-primary text-primary ${
-                  errors.name ? 'border-red-300' : 'border-secondary'
+                className={`w-full bg-surface text-default ${
+                  errors.name ? 'border-red-300' : 'border-strong'
                 } disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 placeholder="Enter prompt name"
               />
@@ -181,12 +179,12 @@ export function PromptForm() {
                 <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
               )}
               {isEditing && (
-                <p className="mt-1 text-sm text-tertiary">Name cannot be changed when editing</p>
+                <p className="mt-1 text-sm text-subtle">Name cannot be changed when editing</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="description" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="description" className="block text-sm font-medium text-default mb-2">
                 Description
               </Label>
               <Textarea
@@ -194,13 +192,13 @@ export function PromptForm() {
                 {...register('description')}
                 disabled={isSubmitting}
                 rows={4}
-                className="w-full bg-primary text-primary border-secondary resize-vertical"
+                className="w-full bg-surface text-default border-strong resize-vertical"
                 placeholder="Describe what this prompt does..."
               />
             </div>
 
             <div>
-              <Label className="block text-sm font-medium text-primary mb-2">
+              <Label className="block text-sm font-medium text-default mb-2">
                 Tags
               </Label>
               <Controller
@@ -212,8 +210,8 @@ export function PromptForm() {
                     tags={field.value}
                     onChange={field.onChange}
                     placeholder="Add tags and press Enter..."
-                    className="w-full px-3 py-2 border border-secondary rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary"
-                    tagClassName="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary text-sm rounded-full"
+                    className="w-full px-3 py-2 border border-strong rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-default"
+                    tagClassName="inline-flex items-center gap-1 px-2 py-1 bg-surface-alt text-muted text-sm rounded-full"
                     disabled={isSubmitting}
                   />
                 )}
@@ -233,7 +231,7 @@ export function PromptForm() {
           {/* Right Side - Prompt Content */}
           <div className="p-6 space-y-6">
             <div>
-              <Label htmlFor="system_prompt" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="system_prompt" className="block text-sm font-medium text-default mb-2">
                 System Prompt *
               </Label>
               <Textarea
@@ -241,8 +239,8 @@ export function PromptForm() {
                 {...register('system_prompt')}
                 disabled={isSubmitting}
                 rows={8}
-                className={`w-full bg-primary text-primary font-mono text-sm resize-vertical ${
-                  errors.system_prompt ? 'border-red-300' : 'border-secondary'
+                className={`w-full bg-surface text-default font-mono text-sm resize-vertical ${
+                  errors.system_prompt ? 'border-red-300' : 'border-strong'
                 }`}
                 placeholder="You are a helpful assistant..."
               />
@@ -252,7 +250,7 @@ export function PromptForm() {
             </div>
 
             <div>
-              <Label htmlFor="user_prompt" className="block text-sm font-medium text-primary mb-2">
+              <Label htmlFor="user_prompt" className="block text-sm font-medium text-default mb-2">
                 User Prompt
               </Label>
               <Textarea
@@ -260,7 +258,7 @@ export function PromptForm() {
                 {...register('user_prompt')}
                 disabled={isSubmitting}
                 rows={6}
-                className="w-full bg-primary text-primary border-secondary font-mono text-sm resize-vertical"
+                className="w-full bg-surface text-default border-strong font-mono text-sm resize-vertical"
                 placeholder="Enter user prompt template..."
               />
             </div>
@@ -268,20 +266,16 @@ export function PromptForm() {
         </div>
 
         {/* Action Buttons */}
-        <div className="px-6 py-4 bg-tertiary border-t border-secondary flex items-center justify-end space-x-3">
-          <button
+        <div className="px-6 py-4 bg-surface-alt border-t border-strong flex items-center justify-end space-x-3">
+          <Button
             type="button"
+            variant="outline"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="px-4 py-2 text-secondary hover:text-primary border border-secondary hover:bg-primary rounded-md transition-colors disabled:opacity-50"
           >
             Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50 flex items-center space-x-2"
-          >
+          </Button>
+          <Button type="submit" disabled={isSubmitting || !isDirty}>
             {isSubmitting ? (
               <>
                 <LoadingSpinner size="sm" />
@@ -293,7 +287,7 @@ export function PromptForm() {
                 <span>{isEditing ? 'Update' : 'Create'}</span>
               </>
             )}
-          </button>
+          </Button>
         </div>
       </form>
     </div>
