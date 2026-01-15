@@ -63,6 +63,9 @@ export function PromptList() {
               <thead className="bg-[var(--terminal-gray)] border-b border-[var(--terminal-border)]">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
+                    GROUP
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
                     NAME
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
@@ -78,23 +81,20 @@ export function PromptList() {
               </thead>
               <tbody className="divide-y divide-[var(--terminal-border)]">
                 {prompts.map((prompt) => (
-                  <tr key={prompt.name} className="hover:bg-[var(--terminal-gray)] transition-colors">
+                  <tr key={`${prompt.group}/${prompt.name}`} className="hover:bg-[var(--terminal-gray)] transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-[var(--terminal-text)]">
-                        {prompt.name}
-                      </div>
+                      <div className="text-sm text-[var(--terminal-text-dim)]">{prompt.group}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[var(--terminal-text)]">{prompt.name}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-[var(--terminal-text-dim)] max-w-md">
-                        {prompt.description || '—'}
-                      </div>
+                      <div className="text-sm text-[var(--terminal-text-dim)] max-w-md">{prompt.description || '—'}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {prompt.tags && prompt.tags.length > 0 ? (
-                          prompt.tags.map((tag) => (
-                            <TagPill key={tag} tag={tag} />
-                          ))
+                          prompt.tags.map((tag) => <TagPill key={tag} tag={tag} />)
                         ) : (
                           <span className="text-xs text-[var(--terminal-text-dim)]">—</span>
                         )}
@@ -109,16 +109,13 @@ export function PromptList() {
                           className="text-[var(--terminal-amber)] hover:text-[var(--terminal-amber)] hover:bg-[var(--terminal-amber)]/10"
                         >
                           <Link
-                            to={`/edit/${encodeURIComponent(prompt.name)}`}
+                            to={`/edit/${encodeURIComponent(prompt.group)}/${encodeURIComponent(prompt.name)}`}
                             title="Edit prompt"
                           >
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <DeletePromptDialog
-                          promptName={prompt.name}
-                          onDelete={deletePrompt}
-                        >
+                        <DeletePromptDialog promptGroup={prompt.group} promptName={prompt.name} onDelete={deletePrompt}>
                           <Button
                             variant="ghost"
                             size="icon"

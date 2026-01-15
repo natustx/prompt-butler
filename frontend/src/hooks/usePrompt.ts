@@ -10,17 +10,17 @@ interface UsePromptState {
   saveError: string | null;
   refetch: () => void;
   createPrompt: (data: PromptCreate) => Promise<Prompt>;
-  updatePrompt: (name: string, data: PromptUpdate) => Promise<Prompt>;
+  updatePrompt: (group: string, name: string, data: PromptUpdate) => Promise<Prompt>;
 }
 
-export function usePrompt(name?: string): UsePromptState {
+export function usePrompt(group?: string, name?: string): UsePromptState {
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const fetchPrompt = useCallback(async () => {
-    if (!name) {
+    if (!group || !name) {
       setPrompt(null);
       setLoading(false);
       return;
@@ -29,14 +29,14 @@ export function usePrompt(name?: string): UsePromptState {
     try {
       setLoading(true);
       setError(null);
-      const promptData = await promptApi.getPrompt(name);
+      const promptData = await promptApi.getPrompt(group, name);
       setPrompt(promptData);
     } catch (err) {
       handleApiError(err, 'fetch prompt', setError);
     } finally {
       setLoading(false);
     }
-  }, [name]);
+  }, [group, name]);
 
   const createPrompt = useCallback(async (data: PromptCreate): Promise<Prompt> => {
     try {
@@ -50,10 +50,10 @@ export function usePrompt(name?: string): UsePromptState {
     }
   }, []);
 
-  const updatePrompt = useCallback(async (promptName: string, data: PromptUpdate): Promise<Prompt> => {
+  const updatePrompt = useCallback(async (promptGroup: string, promptName: string, data: PromptUpdate): Promise<Prompt> => {
     try {
       setSaveError(null);
-      const updatedPrompt = await promptApi.updatePrompt(promptName, data);
+      const updatedPrompt = await promptApi.updatePrompt(promptGroup, promptName, data);
       setPrompt(updatedPrompt);
       return updatedPrompt;
     } catch (err) {

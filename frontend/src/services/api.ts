@@ -1,10 +1,19 @@
-import type { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
+import type {
+  Prompt,
+  PromptCreate,
+  PromptUpdate,
+  TagWithCount,
+  TagRenameRequest,
+  TagRenameResponse,
+  GroupRenameRequest,
+  GroupRenameResponse,
+} from '../types/prompt';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 class ApiError extends Error {
   public status: number;
-  
+
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -33,25 +42,30 @@ async function handleResponse<T>(response: Response): Promise<T> {
     }
     throw new ApiError(response.status, message);
   }
-  
+
   // Handle 204 No Content
   if (response.status === 204) {
     return {} as T;
   }
-  
+
   return response.json();
 }
 
 export const promptApi = {
   // List all prompts
-  async listPrompts(): Promise<Prompt[]> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/`);
+  async listPrompts(group?: string): Promise<Prompt[]> {
+    const url = group
+      ? `${API_BASE_URL}/api/prompts/?group=${encodeURIComponent(group)}`
+      : `${API_BASE_URL}/api/prompts/`;
+    const response = await fetch(url);
     return handleResponse<Prompt[]>(response);
   },
 
   // Get a specific prompt
-  async getPrompt(name: string): Promise<Prompt> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/${encodeURIComponent(name)}`);
+  async getPrompt(group: string, name: string): Promise<Prompt> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/prompts/${encodeURIComponent(group)}/${encodeURIComponent(name)}`
+    );
     return handleResponse<Prompt>(response);
   },
 
@@ -68,23 +82,65 @@ export const promptApi = {
   },
 
   // Update an existing prompt
-  async updatePrompt(name: string, updates: PromptUpdate): Promise<Prompt> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/${encodeURIComponent(name)}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updates),
-    });
+  async updatePrompt(group: string, name: string, updates: PromptUpdate): Promise<Prompt> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/prompts/${encodeURIComponent(group)}/${encodeURIComponent(name)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      }
+    );
     return handleResponse<Prompt>(response);
   },
 
   // Delete a prompt
-  async deletePrompt(name: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/${encodeURIComponent(name)}`, {
-      method: 'DELETE',
-    });
+  async deletePrompt(group: string, name: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/prompts/${encodeURIComponent(group)}/${encodeURIComponent(name)}`,
+      {
+        method: 'DELETE',
+      }
+    );
     return handleResponse<void>(response);
+  },
+
+  // List all groups
+  async listGroups(): Promise<string[]> {
+    const response = await fetch(`${API_BASE_URL}/api/prompts/groups`);
+    return handleResponse<string[]>(response);
+  },
+
+  // List all tags with counts
+  async listTags(): Promise<TagWithCount[]> {
+    const response = await fetch(`${API_BASE_URL}/api/prompts/tags`);
+    return handleResponse<TagWithCount[]>(response);
+  },
+
+  // Rename a tag
+  async renameTag(request: TagRenameRequest): Promise<TagRenameResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/prompts/tags/rename`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+    return handleResponse<TagRenameResponse>(response);
+  },
+
+  // Rename a group
+  async renameGroup(request: GroupRenameRequest): Promise<GroupRenameResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/prompts/groups/rename`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+    return handleResponse<GroupRenameResponse>(response);
   },
 };
 

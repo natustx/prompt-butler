@@ -17,12 +17,13 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface DeletePromptDialogProps {
+  promptGroup: string;
   promptName: string;
-  onDelete: (promptName: string) => Promise<void>;
+  onDelete: (group: string, name: string) => Promise<void>;
   children: ReactNode; // The trigger element
 }
 
-export function DeletePromptDialog({ promptName, onDelete, children }: DeletePromptDialogProps) {
+export function DeletePromptDialog({ promptGroup, promptName, onDelete, children }: DeletePromptDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -30,7 +31,7 @@ export function DeletePromptDialog({ promptName, onDelete, children }: DeletePro
     try {
       setIsDeleting(true);
       setDeleteError(null);
-      await onDelete(promptName);
+      await onDelete(promptGroup, promptName);
     } catch (error) {
       handleApiError(error, 'delete prompt', setDeleteError);
     } finally {
@@ -40,33 +41,27 @@ export function DeletePromptDialog({ promptName, onDelete, children }: DeletePro
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        {children}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent className="bg-surface max-w-md">
         <AlertDialogHeader className="text-left">
           <div className="flex items-center space-x-3 mb-2">
             <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
               <Trash2 className="h-5 w-5 text-red-600" />
             </div>
-            <AlertDialogTitle className="text-lg font-semibold text-default">
-              Delete Prompt
-            </AlertDialogTitle>
+            <AlertDialogTitle className="text-lg font-semibold text-default">Delete Prompt</AlertDialogTitle>
           </div>
         </AlertDialogHeader>
         <AlertDialogDescription className="text-muted text-left">
           Are you sure you want to delete the prompt{' '}
-          <span className="font-semibold text-default">"{promptName}"</span>?
-          <span className="block text-subtle text-sm mt-2">
-            This action cannot be undone.
+          <span className="font-semibold text-default">
+            "{promptGroup}/{promptName}"
           </span>
-          
+          ?
+          <span className="block text-subtle text-sm mt-2">This action cannot be undone.</span>
           {deleteError && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {deleteError}
-              </AlertDescription>
+              <AlertDescription>{deleteError}</AlertDescription>
             </Alert>
           )}
         </AlertDialogDescription>

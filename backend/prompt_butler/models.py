@@ -69,3 +69,30 @@ class ErrorResponse(BaseModel):
     model_config = {
         'json_schema_extra': {'examples': [{'detail': 'Prompt not found'}, {'detail': 'Invalid prompt data'}]}
     }
+
+
+class TagRenameRequest(BaseModel):
+    old_tag: str = Field(..., description='Current tag name', min_length=1)
+    new_tag: str = Field(..., description='New tag name', min_length=1)
+
+
+class TagRenameResponse(BaseModel):
+    old_tag: str = Field(..., description='Previous tag name')
+    new_tag: str = Field(..., description='New tag name')
+    updated_count: int = Field(..., description='Number of prompts updated')
+
+
+class GroupRenameRequest(BaseModel):
+    old_name: str = Field(..., description='Current group name', min_length=1)
+    new_name: str = Field(..., description='New group name', min_length=1)
+
+
+class GroupRenameResponse(BaseModel):
+    old_name: str = Field(..., description='Previous group name')
+    new_name: str = Field(..., description='New group name')
+    moved_count: int = Field(..., description='Number of prompts moved')
+
+
+class TagWithCount(BaseModel):
+    name: str = Field(..., description='Tag name')
+    count: int = Field(..., description='Number of prompts with this tag')

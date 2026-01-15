@@ -4,8 +4,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, AlertCircle } from 'lucide-react';
 import { usePrompt } from '../hooks/usePrompt';
+import { useTagsAndGroups } from '../hooks/useTagsAndGroups';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { TagInput } from '../components/TagInput';
+import { TagAutocomplete } from '../components/TagAutocomplete';
+import { GroupSelect } from '../components/GroupSelect';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -17,12 +19,14 @@ import { promptFormSchema, type PromptFormInput } from '../schemas/prompt';
 import type { PromptCreate, PromptUpdate } from '../types/prompt';
 
 export function PromptForm() {
-  const { name } = useParams<{ name: string }>();
+  const { group, name } = useParams<{ group: string; name: string }>();
   const navigate = useNavigate();
-  const isEditing = Boolean(name);
+  const isEditing = Boolean(group && name);
+  const decodedGroup = group ? decodeURIComponent(group) : undefined;
   const decodedName = name ? decodeURIComponent(name) : undefined;
 
-  const { prompt, loading, error, saveError, createPrompt, updatePrompt } = usePrompt(decodedName);
+  const { prompt, loading, error, saveError, createPrompt, updatePrompt } = usePrompt(decodedGroup, decodedName);
+  const { tags: availableTags, groups: availableGroups } = useTagsAndGroups();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<PromptFormInput>({
@@ -33,6 +37,7 @@ export function PromptForm() {
       system_prompt: '',
       user_prompt: '',
       tags: [],
+      group: 'default',
     },
   });
 
@@ -47,6 +52,7 @@ export function PromptForm() {
         system_prompt: prompt.system_prompt,
         user_prompt: prompt.user_prompt || '',
         tags: prompt.tags || [],
+        group: prompt.group || 'default',
       });
     }
   }, [prompt, isEditing, reset]);
@@ -54,15 +60,15 @@ export function PromptForm() {
   const onSubmit = async (data: PromptFormInput) => {
     try {
       setSubmitError(null);
-      
-      if (isEditing && decodedName) {
+
+      if (isEditing && decodedGroup && decodedName) {
         const updateData: PromptUpdate = {
           description: data.description.trim() || undefined,
           system_prompt: data.system_prompt,
           user_prompt: data.user_prompt.trim() || undefined,
           tags: data.tags.length > 0 ? data.tags : undefined,
         };
-        await updatePrompt(decodedName, updateData);
+        await updatePrompt(decodedGroup, decodedName, updateData);
       } else {
         const createData: PromptCreate = {
           name: data.name,
@@ -70,6 +76,7 @@ export function PromptForm() {
           system_prompt: data.system_prompt,
           user_prompt: data.user_prompt.trim() || undefined,
           tags: data.tags.length > 0 ? data.tags : undefined,
+          group: data.group || 'default',
         };
         await createPrompt(createData);
       }
@@ -137,9 +144,7 @@ export function PromptForm() {
         <div className="bg-[var(--terminal-dark)] border border-[var(--terminal-red)]/50 p-6">
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              ERROR: {error}
-            </AlertDescription>
+            <AlertDescription>ERROR: {error}</AlertDescription>
           </Alert>
           <Button variant="secondary" onClick={handleCancel}>
             GO_BACK
@@ -153,14 +158,41 @@ export function PromptForm() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-[var(--terminal-green)] crt-glow tracking-wider">
-          &gt; {isEditing ? `EDIT: ${decodedName}` : 'NEW_PROMPT'}
+          &gt; {isEditing ? `EDIT: ${decodedGroup}/${decodedName}` : 'NEW_PROMPT'}
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-[var(--terminal-dark)] border border-[var(--terminal-border)] overflow-hidden">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-[var(--terminal-dark)] border border-[var(--terminal-border)] overflow-hidden"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[var(--terminal-border)]">
           {/* Left Side - Basic Info */}
           <div className="p-6 space-y-6">
+            <div>
+              <Label htmlFor="group" className="block text-sm font-medium mb-2">
+                GROUP *
+              </Label>
+              <Controller
+                name="group"
+                control={control}
+                render={({ field }) => (
+                  <GroupSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    availableGroups={availableGroups}
+                    placeholder="select_or_enter_group..."
+                    className={`w-full ${errors.group ? 'border-[var(--terminal-red)]' : ''}`}
+                    disabled={isEditing || isSubmitting}
+                  />
+                )}
+              />
+              {errors.group && <p className="mt-1 text-sm text-[var(--terminal-red)]">{errors.group.message}</p>}
+              {isEditing && (
+                <p className="mt-1 text-sm text-[var(--terminal-text-dim)]">// group is immutable during edit</p>
+              )}
+            </div>
+
             <div>
               <Label htmlFor="name" className="block text-sm font-medium mb-2">
                 NAME *
@@ -170,14 +202,10 @@ export function PromptForm() {
                 id="name"
                 {...register('name')}
                 disabled={isEditing || isSubmitting}
-                className={`w-full ${
-                  errors.name ? 'border-[var(--terminal-red)]' : ''
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full ${errors.name ? 'border-[var(--terminal-red)]' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
                 placeholder="enter_prompt_name"
               />
-              {errors.name && (
-                <p className="mt-1 text-sm text-[var(--terminal-red)]">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="mt-1 text-sm text-[var(--terminal-red)]">{errors.name.message}</p>}
               {isEditing && (
                 <p className="mt-1 text-sm text-[var(--terminal-text-dim)]">// name is immutable during edit</p>
               )}
@@ -198,17 +226,15 @@ export function PromptForm() {
             </div>
 
             <div>
-              <Label className="block text-sm font-medium mb-2">
-                TAGS
-              </Label>
+              <Label className="block text-sm font-medium mb-2">TAGS</Label>
               <Controller
                 name="tags"
                 control={control}
                 render={({ field }) => (
-                  <TagInput
-                    {...field}
+                  <TagAutocomplete
                     tags={field.value}
                     onChange={field.onChange}
+                    availableTags={availableTags}
                     placeholder="add_tags_press_enter..."
                     className="w-full px-3 py-2 border border-[var(--terminal-border)] bg-[var(--terminal-dark)] text-[var(--terminal-text)] focus:border-[var(--terminal-green)] focus:shadow-[0_0_10px_var(--terminal-green-glow)] transition-all"
                     tagClassName="inline-flex items-center gap-1 px-2 py-1 bg-[var(--terminal-green)]/10 text-[var(--terminal-green)] text-sm border border-[var(--terminal-green-dim)]"
@@ -221,9 +247,7 @@ export function PromptForm() {
             {(saveError || submitError) && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  ERROR: {saveError || submitError}
-                </AlertDescription>
+                <AlertDescription>ERROR: {saveError || submitError}</AlertDescription>
               </Alert>
             )}
           </div>
@@ -239,9 +263,7 @@ export function PromptForm() {
                 {...register('system_prompt')}
                 disabled={isSubmitting}
                 rows={8}
-                className={`w-full font-mono text-sm resize-vertical ${
-                  errors.system_prompt ? 'border-[var(--terminal-red)]' : ''
-                }`}
+                className={`w-full font-mono text-sm resize-vertical ${errors.system_prompt ? 'border-[var(--terminal-red)]' : ''}`}
                 placeholder="you_are_a_helpful_assistant..."
               />
               {errors.system_prompt && (
@@ -267,12 +289,7 @@ export function PromptForm() {
 
         {/* Action Buttons */}
         <div className="px-6 py-4 bg-[var(--terminal-gray)] border-t border-[var(--terminal-border)] flex items-center justify-end space-x-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          >
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
             CANCEL
           </Button>
           <Button type="submit" disabled={isSubmitting || !isDirty}>

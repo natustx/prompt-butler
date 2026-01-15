@@ -8,7 +8,7 @@ interface UsePromptsState {
   loading: boolean;
   error: string | null;
   refetch: () => void;
-  deletePrompt: (name: string) => Promise<void>;
+  deletePrompt: (group: string, name: string) => Promise<void>;
 }
 
 export function usePrompts(): UsePromptsState {
@@ -20,7 +20,7 @@ export function usePrompts(): UsePromptsState {
     try {
       setLoading(true);
       setError(null);
-      
+
       const prompts = await promptApi.listPrompts();
       setPrompts(prompts);
     } catch (err) {
@@ -30,10 +30,10 @@ export function usePrompts(): UsePromptsState {
     }
   }, []);
 
-  const deletePrompt = useCallback(async (name: string) => {
+  const deletePrompt = useCallback(async (group: string, name: string) => {
     try {
-      await promptApi.deletePrompt(name);
-      setPrompts(prevPrompts => prevPrompts.filter(p => p.name !== name));
+      await promptApi.deletePrompt(group, name);
+      setPrompts((prevPrompts) => prevPrompts.filter((p) => !(p.group === group && p.name === name)));
     } catch (err) {
       const errorMessage = extractErrorMessage(err, 'Failed to delete prompt');
       console.error('Failed to delete prompt:', err);
