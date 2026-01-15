@@ -3,20 +3,7 @@ version: '3'
 vars:
   PYTHON: .venv/bin/python
 
-includes:
-  feature:
-    taskfile: ./workflow/Taskfile.yml
-
 tasks:
-  # Root-level setup
-  setup:
-    desc: Install dependencies for root-level scripts and utilities
-    cmds:
-      - echo "Setting up root-level dependencies..."
-      - uv venv
-      - uv pip install -r workflow/requirements.txt
-      - echo "Project setup complete."
-
   # Backend tasks
   backend:setup:
     desc: Setup backend virtual environment and install dependencies
