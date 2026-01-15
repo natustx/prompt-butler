@@ -16,6 +16,8 @@ dependencies = [
     "python-multipart==0.0.12",
     "python-dotenv==1.0.1",
     "python-frontmatter==1.1.0",
+    "rich>=13.0.0",
+    "pyperclip>=1.8.0",
 ]
 
 [project.optional-dependencies]
