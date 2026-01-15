@@ -10,6 +10,7 @@ class Prompt(BaseModel):
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: str = Field('', description='User prompt template or example')
     tags: list[str] = Field(default_factory=list, description='List of tags for categorizing the prompt')
+    group: str = Field('default', description='Group/folder for organizing prompts')
 
     @field_validator('name')
     @classmethod
@@ -27,6 +28,7 @@ class Prompt(BaseModel):
                     'system_prompt': 'You are an expert code reviewer. Analyze code for bugs and best practices.',
                     'user_prompt': 'Please review the following code:\n\n{code}',
                     'tags': ['code', 'review', 'development'],
+                    'group': 'development',
                 }
             ]
         }
@@ -39,6 +41,7 @@ class PromptCreate(BaseModel):
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: Optional[str] = Field('', description='User prompt template or example')
     tags: Optional[list[str]] = Field(default_factory=list, description='List of tags for categorizing the prompt')
+    group: Optional[str] = Field('default', description='Group/folder for organizing prompts')
 
     @field_validator('name')
     @classmethod
@@ -53,6 +56,7 @@ class PromptUpdate(BaseModel):
     system_prompt: Optional[str] = Field(None, description='System prompt to set AI context and behavior')
     user_prompt: Optional[str] = Field(None, description='User prompt template or example')
     tags: Optional[list[str]] = Field(None, description='List of tags for categorizing the prompt')
+    group: Optional[str] = Field(None, description='Group/folder for organizing prompts')
 
 
 class PromptResponse(Prompt):

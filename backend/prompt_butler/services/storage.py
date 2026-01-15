@@ -1,114 +1,284 @@
+from __future__ import annotations
+
 import os
 import re
 from pathlib import Path
-from typing import Optional
 
-import yaml
+import frontmatter
 
 from prompt_butler.models import Prompt
 
+USER_SEPARATOR = '---user---'
 
-class StorageService:
-    def __init__(self):
-        self.prompts_dir = Path(os.getenv('PROMPTS_DIR', os.path.expanduser('~/.prompts')))
-        self.ensure_prompts_dir()
 
-    def ensure_prompts_dir(self) -> None:
+class PromptStorage:
+    """Storage service for prompts using markdown files with YAML frontmatter.
+
+    File format:
+        ---
+        name: prompt-name
+        description: Brief description
+        tags:
+          - tag1
+          - tag2
+        ---
+        System prompt content here...
+
+        ---user---
+        User prompt content here...
+
+    Folder structure: ~/.prompts/{group}/name.md
+    """
+
+    def __init__(self, prompts_dir: str | Path | None = None):
+        if prompts_dir is None:
+            prompts_dir = os.getenv('PROMPTS_DIR', os.path.expanduser('~/.prompts'))
+        self.prompts_dir = Path(prompts_dir)
+        self._ensure_prompts_dir()
+
+    def _ensure_prompts_dir(self) -> None:
         self.prompts_dir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def sanitize_filename(name: str) -> str:
-        filename = re.sub(r'[^\w\s-]', '_', name.lower())
-        filename = re.sub(r'[-\s]+', '_', filename)
-        return filename.strip('_')
+    def slugify(name: str) -> str:
+        """Convert a name to a filename-safe slug."""
+        slug = re.sub(r'[^\w\s-]', '', name.lower())
+        slug = re.sub(r'[-\s]+', '-', slug)
+        return slug.strip('-')
 
-    def get_prompt_path(self, name: str) -> Path:
-        sanitized_name = self.sanitize_filename(name)
-        return self.prompts_dir / f'{sanitized_name}.yaml'
+    def _get_group_dir(self, group: str) -> Path:
+        """Get the directory path for a group."""
+        return self.prompts_dir / self.slugify(group)
 
-    def list_prompts(self) -> list[Prompt]:
+    def _get_prompt_path(self, name: str, group: str) -> Path:
+        """Get the file path for a prompt."""
+        group_dir = self._get_group_dir(group)
+        return group_dir / f'{self.slugify(name)}.md'
+
+    def _parse_content(self, content: str) -> tuple[str, str]:
+        """Parse markdown content into system_prompt and user_prompt.
+
+        Content is split by ---user--- separator.
+        """
+        if USER_SEPARATOR in content:
+            parts = content.split(USER_SEPARATOR, 1)
+            system_prompt = parts[0].strip()
+            user_prompt = parts[1].strip() if len(parts) > 1 else ''
+        else:
+            system_prompt = content.strip()
+            user_prompt = ''
+        return system_prompt, user_prompt
+
+    def _format_content(self, system_prompt: str, user_prompt: str) -> str:
+        """Format system_prompt and user_prompt into markdown content."""
+        if user_prompt:
+            return f'{system_prompt}\n\n{USER_SEPARATOR}\n{user_prompt}'
+        return system_prompt
+
+    def _prompt_from_file(self, file_path: Path, group: str) -> Prompt | None:
+        """Load a Prompt from a markdown file."""
         try:
-            yaml_files = list(self.prompts_dir.glob('*.yaml'))
-            prompts = []
+            post = frontmatter.load(file_path)
+            system_prompt, user_prompt = self._parse_content(post.content)
 
-            for file_path in yaml_files:
-                try:
-                    with open(file_path, encoding='utf-8') as f:
-                        data = yaml.safe_load(f)
-                        if data and isinstance(data, dict) and 'name' in data:
-                            prompt = Prompt(**data)
+            return Prompt(
+                name=post.get('name', file_path.stem),
+                description=post.get('description', ''),
+                tags=post.get('tags', []),
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                group=group,
+            )
+        except Exception:
+            return None
+
+    def list(self, group: str | None = None) -> list[Prompt]:
+        """List all prompts, optionally filtered by group.
+
+        Args:
+            group: Optional group name to filter by. If None, returns all prompts.
+
+        Returns:
+            List of Prompt objects sorted by name.
+        """
+        prompts = []
+
+        if group:
+            group_dir = self._get_group_dir(group)
+            if group_dir.exists():
+                for file_path in group_dir.glob('*.md'):
+                    prompt = self._prompt_from_file(file_path, group)
+                    if prompt:
+                        prompts.append(prompt)
+        else:
+            for group_dir in self.prompts_dir.iterdir():
+                if group_dir.is_dir():
+                    group_name = group_dir.name
+                    for file_path in group_dir.glob('*.md'):
+                        prompt = self._prompt_from_file(file_path, group_name)
+                        if prompt:
                             prompts.append(prompt)
-                except (OSError, yaml.YAMLError):
-                    continue
 
-            return sorted(prompts, key=lambda p: p.name)
-        except Exception as e:
-            raise StorageError(f'Failed to list prompts: {str(e)}') from e
+        return sorted(prompts, key=lambda p: (p.group, p.name))
 
-    def get_prompt(self, name: str) -> Optional[Prompt]:
-        file_path = self.get_prompt_path(name)
+    def get(self, name: str, group: str = 'default') -> Prompt | None:
+        """Get a prompt by name and group.
 
+        Args:
+            name: The prompt name.
+            group: The group name (default: 'default').
+
+        Returns:
+            The Prompt if found, None otherwise.
+        """
+        file_path = self._get_prompt_path(name, group)
+        if not file_path.exists():
+            return None
+        return self._prompt_from_file(file_path, group)
+
+    def create(self, prompt: Prompt) -> Prompt:
+        """Create a new prompt.
+
+        Args:
+            prompt: The Prompt to create.
+
+        Returns:
+            The created Prompt.
+
+        Raises:
+            PromptExistsError: If a prompt with the same name exists in the group.
+        """
+        file_path = self._get_prompt_path(prompt.name, prompt.group)
+
+        if file_path.exists():
+            raise PromptExistsError(f"Prompt '{prompt.name}' already exists in group '{prompt.group}'")
+
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        post = frontmatter.Post(
+            content=self._format_content(prompt.system_prompt, prompt.user_prompt),
+            name=prompt.name,
+            description=prompt.description,
+            tags=prompt.tags,
+        )
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(frontmatter.dumps(post))
+
+        return prompt
+
+    def update(self, name: str, group: str, **kwargs) -> Prompt | None:
+        """Update an existing prompt.
+
+        Args:
+            name: The prompt name.
+            group: The group name.
+            **kwargs: Fields to update (description, system_prompt, user_prompt, tags).
+
+        Returns:
+            The updated Prompt if found, None otherwise.
+        """
+        file_path = self._get_prompt_path(name, group)
         if not file_path.exists():
             return None
 
-        try:
-            with open(file_path, encoding='utf-8') as f:
-                data = yaml.safe_load(f)
-                if data:
-                    return Prompt(**data)
-                return None
-        except yaml.YAMLError as e:
-            raise InvalidPromptDataError(f'Invalid YAML in prompt file: {str(e)}') from e
-        except Exception as e:
-            raise StorageError(f'Failed to read prompt: {str(e)}') from e
+        prompt = self._prompt_from_file(file_path, group)
+        if not prompt:
+            return None
 
-    def save_prompt(self, prompt: Prompt) -> None:
-        file_path = self.get_prompt_path(prompt.name)
+        update_data = prompt.model_dump()
+        for key, value in kwargs.items():
+            if value is not None and key in update_data:
+                update_data[key] = value
 
-        try:
-            prompt_dict = prompt.model_dump()
+        updated_prompt = Prompt(**update_data)
 
-            with open(file_path, 'w', encoding='utf-8') as f:
-                yaml.dump(prompt_dict, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        except OSError as e:
-            if 'No space left on device' in str(e):
-                raise StorageError('Insufficient disk space to save prompt') from e
-            elif 'Permission denied' in str(e):
-                raise StorageError('Permission denied to save prompt') from e
-            else:
-                raise StorageError(f'Failed to save prompt: {str(e)}') from e
-        except Exception as e:
-            raise StorageError(f'Unexpected error saving prompt: {str(e)}') from e
+        post = frontmatter.Post(
+            content=self._format_content(updated_prompt.system_prompt, updated_prompt.user_prompt),
+            name=updated_prompt.name,
+            description=updated_prompt.description,
+            tags=updated_prompt.tags,
+        )
 
-    def delete_prompt(self, name: str) -> bool:
-        file_path = self.get_prompt_path(name)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(frontmatter.dumps(post))
 
+        return updated_prompt
+
+    def delete(self, name: str, group: str = 'default') -> bool:
+        """Delete a prompt.
+
+        Args:
+            name: The prompt name.
+            group: The group name (default: 'default').
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        file_path = self._get_prompt_path(name, group)
         if not file_path.exists():
             return False
 
-        try:
-            file_path.unlink()
-            return True
-        except PermissionError as e:
-            raise StorageError('Permission denied to delete prompt') from e
-        except Exception as e:
-            raise StorageError(f'Failed to delete prompt: {str(e)}') from e
+        file_path.unlink()
 
-    def prompt_exists(self, name: str) -> bool:
-        file_path = self.get_prompt_path(name)
+        group_dir = file_path.parent
+        if group_dir.exists() and not any(group_dir.iterdir()):
+            group_dir.rmdir()
+
+        return True
+
+    def exists(self, name: str, group: str = 'default') -> bool:
+        """Check if a prompt exists.
+
+        Args:
+            name: The prompt name.
+            group: The group name (default: 'default').
+
+        Returns:
+            True if exists, False otherwise.
+        """
+        file_path = self._get_prompt_path(name, group)
         return file_path.exists()
+
+    def list_groups(self) -> list[str]:
+        """List all groups.
+
+        Returns:
+            List of group names sorted alphabetically.
+        """
+        groups = []
+        for group_dir in self.prompts_dir.iterdir():
+            if group_dir.is_dir() and any(group_dir.glob('*.md')):
+                groups.append(group_dir.name)
+        return sorted(groups)
 
 
 class StorageError(Exception):
+    """Base exception for storage errors."""
+
     pass
 
 
-class PromptNotFoundError(Exception):
+class PromptNotFoundError(StorageError):
+    """Raised when a prompt is not found."""
+
     pass
 
 
-class InvalidPromptDataError(Exception):
+class PromptExistsError(StorageError):
+    """Raised when trying to create a prompt that already exists."""
+
     pass
 
 
-storage_service = StorageService()
+class InvalidPromptDataError(StorageError):
+    """Raised when prompt data is invalid."""
+
+    pass
+
+
+# Legacy alias for backwards compatibility
+StorageService = PromptStorage
+
+# Default instance
+storage_service = PromptStorage()

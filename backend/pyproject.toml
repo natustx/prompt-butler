@@ -15,6 +15,7 @@ dependencies = [
     "pydantic==2.10.3",
     "python-multipart==0.0.12",
     "python-dotenv==1.0.1",
+    "python-frontmatter==1.1.0",
 ]
 
 [project.optional-dependencies]
