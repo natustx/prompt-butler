@@ -9,26 +9,26 @@ interface EmptyStateProps {
   actionLink?: string;
 }
 
-export function EmptyState({ 
-  title = 'No prompts found',
-  description = 'Get started by creating your first prompt template.',
-  actionText = 'Create New Prompt',
+export function EmptyState({
+  title = 'NO_PROMPTS_FOUND',
+  description = '// initialize your first prompt template',
+  actionText = 'CREATE_NEW',
   actionLink = '/new'
 }: EmptyStateProps) {
   return (
     <div className="text-center py-12">
-      <div className="mx-auto w-24 h-24 bg-surface-alt rounded-full flex items-center justify-center mb-6">
-        <FileText className="h-12 w-12 text-subtle" />
+      <div className="mx-auto w-24 h-24 bg-[var(--terminal-gray)] border border-[var(--terminal-border)] flex items-center justify-center mb-6">
+        <FileText className="h-12 w-12 text-[var(--terminal-green-dim)]" />
       </div>
-      
-      <h3 className="text-lg font-semibold text-default mb-2">
+
+      <h3 className="text-lg font-semibold text-[var(--terminal-green)] crt-glow mb-2 tracking-wider">
         {title}
       </h3>
-      
-      <p className="text-subtle mb-8 max-w-md mx-auto">
+
+      <p className="text-[var(--terminal-text-dim)] mb-8 max-w-md mx-auto">
         {description}
       </p>
-      
+
       <Button asChild>
         <Link to={actionLink}>
           <Plus className="h-4 w-4 mr-2" />

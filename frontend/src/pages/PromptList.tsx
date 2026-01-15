@@ -13,11 +13,11 @@ export function PromptList() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-default">Prompts</h1>
-        <div className="bg-surface shadow rounded-lg p-8 flex items-center justify-center">
+        <h1 className="text-2xl font-bold text-[var(--terminal-green)] crt-glow tracking-wider">&gt; PROMPTS</h1>
+        <div className="bg-[var(--terminal-dark)] border border-[var(--terminal-border)] p-8 flex items-center justify-center">
           <div className="flex items-center space-x-3">
             <LoadingSpinner size="md" />
-            <span className="text-muted">Loading prompts...</span>
+            <span className="text-[var(--terminal-text-dim)]">Loading prompts...</span>
           </div>
         </div>
       </div>
@@ -27,14 +27,14 @@ export function PromptList() {
   if (error) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-default">Prompts</h1>
-        <div className="bg-surface shadow rounded-lg p-6">
-          <div className="flex items-center space-x-3 text-red-600">
+        <h1 className="text-2xl font-bold text-[var(--terminal-green)] crt-glow tracking-wider">&gt; PROMPTS</h1>
+        <div className="bg-[var(--terminal-dark)] border border-[var(--terminal-red)]/50 p-6">
+          <div className="flex items-center space-x-3 text-[var(--terminal-red)]">
             <AlertCircle className="h-5 w-5" />
-            <span>Error loading prompts: {error}</span>
+            <span>ERROR: {error}</span>
           </div>
           <Button onClick={refetch} className="mt-4">
-            Retry
+            RETRY
           </Button>
         </div>
       </div>
@@ -44,8 +44,8 @@ export function PromptList() {
   if (prompts.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-default">Prompts</h1>
-        <div className="bg-surface shadow rounded-lg">
+        <h1 className="text-2xl font-bold text-[var(--terminal-green)] crt-glow tracking-wider">&gt; PROMPTS</h1>
+        <div className="bg-[var(--terminal-dark)] border border-[var(--terminal-border)]">
           <EmptyState />
         </div>
       </div>
@@ -55,38 +55,38 @@ export function PromptList() {
   return (
     <>
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-default">Prompts</h1>
-        
-        <div className="bg-surface shadow rounded-lg overflow-hidden">
+        <h1 className="text-2xl font-bold text-[var(--terminal-green)] crt-glow tracking-wider">&gt; PROMPTS</h1>
+
+        <div className="bg-[var(--terminal-dark)] border border-[var(--terminal-border)] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-strong">
-              <thead className="bg-surface-alt">
+            <table className="min-w-full">
+              <thead className="bg-[var(--terminal-gray)] border-b border-[var(--terminal-border)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                    Name
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
+                    NAME
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                    Description
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
+                    DESCRIPTION
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                    Tags
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
+                    TAGS
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">
-                    Actions
+                  <th className="px-6 py-3 text-right text-xs font-medium text-[var(--terminal-green)] uppercase tracking-wider">
+                    ACTIONS
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-strong">
+              <tbody className="divide-y divide-[var(--terminal-border)]">
                 {prompts.map((prompt) => (
-                  <tr key={prompt.name} className="hover:bg-surface-alt transition-colors">
+                  <tr key={prompt.name} className="hover:bg-[var(--terminal-gray)] transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-default">
+                      <div className="text-sm font-medium text-[var(--terminal-text)]">
                         {prompt.name}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-muted max-w-md">
-                        {prompt.description || 'No description'}
+                      <div className="text-sm text-[var(--terminal-text-dim)] max-w-md">
+                        {prompt.description || '—'}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -96,7 +96,7 @@ export function PromptList() {
                             <TagPill key={tag} tag={tag} />
                           ))
                         ) : (
-                          <span className="text-xs text-subtle">No tags</span>
+                          <span className="text-xs text-[var(--terminal-text-dim)]">—</span>
                         )}
                       </div>
                     </td>
@@ -106,7 +106,7 @@ export function PromptList() {
                           variant="ghost"
                           size="icon"
                           asChild
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          className="text-[var(--terminal-amber)] hover:text-[var(--terminal-amber)] hover:bg-[var(--terminal-amber)]/10"
                         >
                           <Link
                             to={`/edit/${encodeURIComponent(prompt.name)}`}
@@ -122,7 +122,7 @@ export function PromptList() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            className="text-[var(--terminal-red)] hover:text-[var(--terminal-red)] hover:bg-[var(--terminal-red)]/10"
                             title="Delete prompt"
                           >
                             <Trash2 className="h-4 w-4" />
