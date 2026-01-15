@@ -723,8 +723,10 @@ def cmd_group_rename(args: Namespace) -> int:
 
 def cmd_tui(args: Namespace) -> int:
     """Launch the TUI application."""
-    error_console.print('[yellow]TUI is not yet implemented. Coming soon![/yellow]')
-    return 1
+    from prompt_butler.tui import run_tui
+
+    run_tui()
+    return 0
 
 
 def main() -> int:

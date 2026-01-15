@@ -612,13 +612,18 @@ class TestCmdConfig:
 class TestCmdTui:
     """Tests for pb tui command."""
 
-    def test_tui_not_implemented(self, capsys):
+    def test_tui_launches_successfully(self, monkeypatch):
+        """Test that cmd_tui calls run_tui."""
+        from unittest.mock import MagicMock
+
+        mock_run_tui = MagicMock()
+        monkeypatch.setattr('prompt_butler.tui.run_tui', mock_run_tui)
+
         args = Namespace()
         result = cmd_tui(args)
 
-        assert result == 1
-        captured = capsys.readouterr()
-        assert 'not yet implemented' in captured.err.lower()
+        assert result == 0
+        mock_run_tui.assert_called_once()
 
 
 class TestCmdTagList:
