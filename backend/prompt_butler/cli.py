@@ -13,7 +13,12 @@ from rich.console import Console
 from rich.table import Table
 
 from prompt_butler.models import Prompt
-from prompt_butler.services.storage import PromptExistsError, PromptStorage
+from prompt_butler.services.storage import (
+    GroupExistsError,
+    GroupNotFoundError,
+    PromptExistsError,
+    PromptStorage,
+)
 
 console = Console()
 error_console = Console(stderr=True)
@@ -576,6 +581,146 @@ def cmd_config(args: Namespace) -> int:
     return 0
 
 
+def cmd_tag(args: Namespace) -> int:
+    """Handle tag subcommands."""
+    if args.tag_command == 'list':
+        return cmd_tag_list(args)
+    elif args.tag_command == 'rename':
+        return cmd_tag_rename(args)
+    else:
+        error_console.print('[red]Unknown tag command. Use: list, rename[/red]')
+        return 1
+
+
+def cmd_tag_list(args: Namespace) -> int:
+    """List all tags with their counts."""
+    storage = get_storage()
+    tags = storage.list_all_tags()
+
+    if args.json:
+        output_json({'tags': [{'name': name, 'count': count} for name, count in tags.items()]})
+        return 0
+
+    if not tags:
+        console.print('[yellow]No tags found.[/yellow]')
+        return 0
+
+    table = Table(title='Tags')
+    table.add_column('Tag', style='green')
+    table.add_column('Count', style='cyan', justify='right')
+
+    for name, count in tags.items():
+        table.add_row(name, str(count))
+
+    console.print(table)
+    return 0
+
+
+def cmd_tag_rename(args: Namespace) -> int:
+    """Rename a tag across all prompts."""
+    storage = get_storage()
+
+    tag_counts = storage.list_all_tags()
+    if args.old not in tag_counts:
+        msg = f"Tag '{args.old}' not found"
+        if args.json:
+            output_json({'status': 'error', 'message': msg})
+        else:
+            error_console.print(f'[red]{msg}.[/red]')
+        return 1
+
+    updated_count = storage.rename_tag(args.old, args.new)
+
+    if args.json:
+        output_json({'status': 'renamed', 'old': args.old, 'new': args.new, 'updated_count': updated_count})
+    else:
+        console.print(f"[green]Renamed tag '{args.old}' to '{args.new}' in {updated_count} prompt(s).[/green]")
+
+    return 0
+
+
+def cmd_group(args: Namespace) -> int:
+    """Handle group subcommands."""
+    if args.group_command == 'list':
+        return cmd_group_list(args)
+    elif args.group_command == 'create':
+        return cmd_group_create(args)
+    elif args.group_command == 'rename':
+        return cmd_group_rename(args)
+    else:
+        error_console.print('[red]Unknown group command. Use: list, create, rename[/red]')
+        return 1
+
+
+def cmd_group_list(args: Namespace) -> int:
+    """List all groups."""
+    storage = get_storage()
+    groups = storage.list_groups(include_empty=args.all)
+
+    if args.json:
+        output_json({'groups': groups})
+        return 0
+
+    if not groups:
+        console.print('[yellow]No groups found.[/yellow]')
+        return 0
+
+    table = Table(title='Groups')
+    table.add_column('Group', style='blue')
+
+    for group in groups:
+        table.add_row(group)
+
+    console.print(table)
+    return 0
+
+
+def cmd_group_create(args: Namespace) -> int:
+    """Create an empty group folder."""
+    storage = get_storage()
+
+    if storage.create_group(args.name):
+        if args.json:
+            output_json({'status': 'created', 'group': args.name})
+        else:
+            console.print(f"[green]Created group '{args.name}'.[/green]")
+        return 0
+    else:
+        msg = f"Group '{args.name}' already exists"
+        if args.json:
+            output_json({'status': 'error', 'message': msg})
+        else:
+            error_console.print(f'[red]{msg}.[/red]')
+        return 1
+
+
+def cmd_group_rename(args: Namespace) -> int:
+    """Rename a group folder."""
+    storage = get_storage()
+
+    try:
+        moved_count = storage.rename_group(args.old, args.new)
+        if args.json:
+            output_json({'status': 'renamed', 'old': args.old, 'new': args.new, 'moved_count': moved_count})
+        else:
+            console.print(f"[green]Renamed group '{args.old}' to '{args.new}' ({moved_count} prompt(s) moved).[/green]")
+        return 0
+    except GroupNotFoundError:
+        msg = f"Group '{args.old}' not found"
+        if args.json:
+            output_json({'status': 'error', 'message': msg})
+        else:
+            error_console.print(f'[red]{msg}.[/red]')
+        return 1
+    except GroupExistsError:
+        msg = f"Group '{args.new}' already exists with prompts"
+        if args.json:
+            output_json({'status': 'error', 'message': msg})
+        else:
+            error_console.print(f'[red]{msg}.[/red]')
+        return 1
+
+
 def cmd_tui(args: Namespace) -> int:
     """Launch the TUI application."""
     error_console.print('[yellow]TUI is not yet implemented. Coming soon![/yellow]')
@@ -683,6 +828,40 @@ def main() -> int:
     # TUI command
     subparsers.add_parser('tui', help='Launch TUI application')
 
+    # Tag command with subcommands
+    tag_parser = subparsers.add_parser('tag', help='Manage tags')
+    tag_subparsers = tag_parser.add_subparsers(dest='tag_command', help='Tag commands')
+
+    # tag list
+    tag_list_parser = tag_subparsers.add_parser('list', help='List all tags with counts')
+    tag_list_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # tag rename
+    tag_rename_parser = tag_subparsers.add_parser('rename', help='Rename a tag across all prompts')
+    tag_rename_parser.add_argument('old', help='Current tag name')
+    tag_rename_parser.add_argument('new', help='New tag name')
+    tag_rename_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # Group command with subcommands
+    group_parser = subparsers.add_parser('group', help='Manage groups')
+    group_subparsers = group_parser.add_subparsers(dest='group_command', help='Group commands')
+
+    # group list
+    group_list_parser = group_subparsers.add_parser('list', help='List all groups')
+    group_list_parser.add_argument('--all', '-a', action='store_true', help='Include empty groups')
+    group_list_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # group create
+    group_create_parser = group_subparsers.add_parser('create', help='Create an empty group')
+    group_create_parser.add_argument('name', help='Group name to create')
+    group_create_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # group rename
+    group_rename_parser = group_subparsers.add_parser('rename', help='Rename a group')
+    group_rename_parser.add_argument('old', help='Current group name')
+    group_rename_parser.add_argument('new', help='New group name')
+    group_rename_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
     args = parser.parse_args()
 
     commands = {
@@ -698,6 +877,8 @@ def main() -> int:
         'index': cmd_index,
         'config': cmd_config,
         'tui': cmd_tui,
+        'tag': cmd_tag,
+        'group': cmd_group,
     }
 
     if args.command in commands:

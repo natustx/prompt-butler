@@ -240,17 +240,102 @@ class PromptStorage:
         file_path = self._get_prompt_path(name, group)
         return file_path.exists()
 
-    def list_groups(self) -> list[str]:
+    def list_groups(self, include_empty: bool = False) -> list[str]:
         """List all groups.
+
+        Args:
+            include_empty: If True, include empty group directories.
 
         Returns:
             List of group names sorted alphabetically.
         """
         groups = []
         for group_dir in self.prompts_dir.iterdir():
-            if group_dir.is_dir() and any(group_dir.glob('*.md')):
-                groups.append(group_dir.name)
+            if group_dir.is_dir():
+                if include_empty or any(group_dir.glob('*.md')):
+                    groups.append(group_dir.name)
         return sorted(groups)
+
+    def list_all_tags(self) -> dict[str, int]:
+        """List all unique tags across all prompts with their counts.
+
+        Returns:
+            Dictionary mapping tag names to their usage counts.
+        """
+        tag_counts: dict[str, int] = {}
+        for prompt in self.list():
+            for tag in prompt.tags:
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        return dict(sorted(tag_counts.items()))
+
+    def rename_tag(self, old_tag: str, new_tag: str) -> int:
+        """Rename a tag across all prompts.
+
+        Args:
+            old_tag: The tag to rename.
+            new_tag: The new tag name.
+
+        Returns:
+            Number of prompts updated.
+        """
+        updated_count = 0
+        for prompt in self.list():
+            if old_tag in prompt.tags:
+                new_tags = [new_tag if t == old_tag else t for t in prompt.tags]
+                self.update(prompt.name, prompt.group, tags=new_tags)
+                updated_count += 1
+        return updated_count
+
+    def create_group(self, name: str) -> bool:
+        """Create an empty group directory.
+
+        Args:
+            name: The group name to create.
+
+        Returns:
+            True if created, False if already exists.
+        """
+        group_dir = self._get_group_dir(name)
+        if group_dir.exists():
+            return False
+        group_dir.mkdir(parents=True, exist_ok=True)
+        return True
+
+    def rename_group(self, old_name: str, new_name: str) -> int:
+        """Rename a group by moving all prompts to the new group.
+
+        Args:
+            old_name: The current group name.
+            new_name: The new group name.
+
+        Returns:
+            Number of prompts moved.
+
+        Raises:
+            GroupNotFoundError: If old group doesn't exist.
+            GroupExistsError: If new group already exists with prompts.
+        """
+        old_dir = self._get_group_dir(old_name)
+        new_dir = self._get_group_dir(new_name)
+
+        if not old_dir.exists():
+            raise GroupNotFoundError(f"Group '{old_name}' not found")
+
+        if new_dir.exists() and any(new_dir.glob('*.md')):
+            raise GroupExistsError(f"Group '{new_name}' already exists with prompts")
+
+        new_dir.mkdir(parents=True, exist_ok=True)
+
+        moved_count = 0
+        for file_path in old_dir.glob('*.md'):
+            new_path = new_dir / file_path.name
+            file_path.rename(new_path)
+            moved_count += 1
+
+        if old_dir.exists() and not any(old_dir.iterdir()):
+            old_dir.rmdir()
+
+        return moved_count
 
 
 class StorageError(Exception):
@@ -273,6 +358,18 @@ class PromptExistsError(StorageError):
 
 class InvalidPromptDataError(StorageError):
     """Raised when prompt data is invalid."""
+
+    pass
+
+
+class GroupNotFoundError(StorageError):
+    """Raised when a group is not found."""
+
+    pass
+
+
+class GroupExistsError(StorageError):
+    """Raised when trying to create a group that already exists."""
 
     pass
 

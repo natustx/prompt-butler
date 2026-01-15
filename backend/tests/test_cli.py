@@ -18,9 +18,16 @@ from prompt_butler.cli import (
     cmd_config,
     cmd_copy,
     cmd_delete,
+    cmd_group,
+    cmd_group_create,
+    cmd_group_list,
+    cmd_group_rename,
     cmd_index,
     cmd_list,
     cmd_show,
+    cmd_tag,
+    cmd_tag_list,
+    cmd_tag_rename,
     cmd_tui,
     fuzzy_match,
     main,
@@ -612,3 +619,297 @@ class TestCmdTui:
         assert result == 1
         captured = capsys.readouterr()
         assert 'not yet implemented' in captured.err.lower()
+
+
+class TestCmdTagList:
+    """Tests for pb tag list command."""
+
+    def test_tag_list_empty(self, mock_storage, capsys):
+        args = Namespace(json=False)
+        result = cmd_tag_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'No tags found' in captured.out
+
+    def test_tag_list_shows_tags_with_counts(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', tags=['web', 'api']))
+        mock_storage.create(Prompt(name='p2', system_prompt='sys', tags=['web', 'cli']))
+        mock_storage.create(Prompt(name='p3', system_prompt='sys', tags=['api']))
+
+        args = Namespace(json=False)
+        result = cmd_tag_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'web' in captured.out
+        assert 'api' in captured.out
+        assert 'cli' in captured.out
+
+    def test_tag_list_json_output(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', tags=['web', 'api']))
+        mock_storage.create(Prompt(name='p2', system_prompt='sys', tags=['web']))
+
+        args = Namespace(json=True)
+        result = cmd_tag_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert 'tags' in data
+        tags_dict = {t['name']: t['count'] for t in data['tags']}
+        assert tags_dict['web'] == 2
+        assert tags_dict['api'] == 1
+
+
+class TestCmdTagRename:
+    """Tests for pb tag rename command."""
+
+    def test_tag_rename_updates_prompts(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', tags=['old-tag', 'other']))
+        mock_storage.create(Prompt(name='p2', system_prompt='sys', tags=['old-tag']))
+
+        args = Namespace(old='old-tag', new='new-tag', json=False)
+        result = cmd_tag_rename(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'Renamed' in captured.out
+        assert '2 prompt(s)' in captured.out
+
+        p1 = mock_storage.get('p1', 'default')
+        assert 'new-tag' in p1.tags
+        assert 'old-tag' not in p1.tags
+        assert 'other' in p1.tags
+
+    def test_tag_rename_json_output(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', tags=['old']))
+
+        args = Namespace(old='old', new='new', json=True)
+        result = cmd_tag_rename(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'renamed'
+        assert data['old'] == 'old'
+        assert data['new'] == 'new'
+        assert data['updated_count'] == 1
+
+    def test_tag_rename_not_found(self, mock_storage, capsys):
+        args = Namespace(old='nonexistent', new='new', json=False)
+        result = cmd_tag_rename(args)
+
+        assert result == 1
+
+    def test_tag_rename_not_found_json(self, mock_storage, capsys):
+        args = Namespace(old='nonexistent', new='new', json=True)
+        result = cmd_tag_rename(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'error'
+
+
+class TestCmdTag:
+    """Tests for pb tag command router."""
+
+    def test_tag_routes_to_list(self, mock_storage, capsys):
+        args = Namespace(tag_command='list', json=False)
+        result = cmd_tag(args)
+
+        assert result == 0
+
+    def test_tag_routes_to_rename(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', tags=['old']))
+
+        args = Namespace(tag_command='rename', old='old', new='new', json=False)
+        result = cmd_tag(args)
+
+        assert result == 0
+
+    def test_tag_unknown_command(self, capsys):
+        args = Namespace(tag_command='unknown')
+        result = cmd_tag(args)
+
+        assert result == 1
+
+
+class TestCmdGroupList:
+    """Tests for pb group list command."""
+
+    def test_group_list_empty(self, mock_storage, capsys):
+        args = Namespace(all=False, json=False)
+        result = cmd_group_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'No groups found' in captured.out
+
+    def test_group_list_shows_groups(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='web'))
+        mock_storage.create(Prompt(name='p2', system_prompt='sys', group='cli'))
+
+        args = Namespace(all=False, json=False)
+        result = cmd_group_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'web' in captured.out
+        assert 'cli' in captured.out
+
+    def test_group_list_json_output(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='web'))
+
+        args = Namespace(all=False, json=True)
+        result = cmd_group_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert 'groups' in data
+        assert 'web' in data['groups']
+
+    def test_group_list_includes_empty_with_all_flag(self, mock_storage, capsys):
+        mock_storage.create_group('empty-group')
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='with-prompt'))
+
+        args = Namespace(all=True, json=True)
+        result = cmd_group_list(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert 'empty-group' in data['groups']
+        assert 'with-prompt' in data['groups']
+
+
+class TestCmdGroupCreate:
+    """Tests for pb group create command."""
+
+    def test_group_create_success(self, mock_storage, capsys):
+        args = Namespace(name='new-group', json=False)
+        result = cmd_group_create(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Created group 'new-group'" in captured.out
+        assert 'new-group' in mock_storage.list_groups(include_empty=True)
+
+    def test_group_create_json_output(self, mock_storage, capsys):
+        args = Namespace(name='new-group', json=True)
+        result = cmd_group_create(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'created'
+        assert data['group'] == 'new-group'
+
+    def test_group_create_already_exists(self, mock_storage, capsys):
+        mock_storage.create_group('existing')
+
+        args = Namespace(name='existing', json=False)
+        result = cmd_group_create(args)
+
+        assert result == 1
+
+    def test_group_create_already_exists_json(self, mock_storage, capsys):
+        mock_storage.create_group('existing')
+
+        args = Namespace(name='existing', json=True)
+        result = cmd_group_create(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'error'
+
+
+class TestCmdGroupRename:
+    """Tests for pb group rename command."""
+
+    def test_group_rename_moves_prompts(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='old-group'))
+        mock_storage.create(Prompt(name='p2', system_prompt='sys', group='old-group'))
+
+        args = Namespace(old='old-group', new='new-group', json=False)
+        result = cmd_group_rename(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'Renamed' in captured.out
+        assert '2 prompt(s)' in captured.out
+
+        groups = mock_storage.list_groups()
+        assert 'new-group' in groups
+        assert 'old-group' not in groups
+
+    def test_group_rename_json_output(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='old'))
+
+        args = Namespace(old='old', new='new', json=True)
+        result = cmd_group_rename(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'renamed'
+        assert data['old'] == 'old'
+        assert data['new'] == 'new'
+        assert data['moved_count'] == 1
+
+    def test_group_rename_not_found(self, mock_storage, capsys):
+        args = Namespace(old='nonexistent', new='new', json=False)
+        result = cmd_group_rename(args)
+
+        assert result == 1
+
+    def test_group_rename_not_found_json(self, mock_storage, capsys):
+        args = Namespace(old='nonexistent', new='new', json=True)
+        result = cmd_group_rename(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'error'
+
+    def test_group_rename_target_exists_with_prompts(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='source'))
+        mock_storage.create(Prompt(name='p2', system_prompt='sys', group='target'))
+
+        args = Namespace(old='source', new='target', json=False)
+        result = cmd_group_rename(args)
+
+        assert result == 1
+
+
+class TestCmdGroup:
+    """Tests for pb group command router."""
+
+    def test_group_routes_to_list(self, mock_storage, capsys):
+        args = Namespace(group_command='list', all=False, json=False)
+        result = cmd_group(args)
+
+        assert result == 0
+
+    def test_group_routes_to_create(self, mock_storage, capsys):
+        args = Namespace(group_command='create', name='new', json=False)
+        result = cmd_group(args)
+
+        assert result == 0
+
+    def test_group_routes_to_rename(self, mock_storage, capsys):
+        mock_storage.create(Prompt(name='p1', system_prompt='sys', group='old'))
+
+        args = Namespace(group_command='rename', old='old', new='new', json=False)
+        result = cmd_group(args)
+
+        assert result == 0
+
+    def test_group_unknown_command(self, capsys):
+        args = Namespace(group_command='unknown')
+        result = cmd_group(args)
+
+        assert result == 1
