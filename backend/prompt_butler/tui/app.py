@@ -6,7 +6,8 @@ from rapidfuzz import fuzz
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.screen import Screen
 from textual.widgets import DataTable, Footer, Header, Input, Label, ListItem, ListView, Static
 
 from prompt_butler.models import Prompt
@@ -142,6 +143,146 @@ class PromptDetailPanel(Vertical):
         content.update(detail_text)
 
 
+class PromptDetailScreen(Screen):
+    """Full-screen detail view for a single prompt."""
+
+    DEFAULT_CSS = """
+    PromptDetailScreen {
+        background: $background;
+    }
+
+    PromptDetailScreen #detail-header {
+        dock: top;
+        height: 3;
+        background: $primary-darken-2;
+        padding: 0 2;
+        content-align: left middle;
+    }
+
+    PromptDetailScreen #detail-header-text {
+        color: $warning;
+        text-style: bold;
+    }
+
+    PromptDetailScreen #detail-scroll {
+        padding: 1 2;
+    }
+
+    PromptDetailScreen .section-header {
+        color: $warning;
+        text-style: bold;
+        margin-top: 1;
+        margin-bottom: 0;
+    }
+
+    PromptDetailScreen .metadata-section {
+        background: $surface;
+        border: solid $primary;
+        padding: 1;
+        margin-bottom: 1;
+    }
+
+    PromptDetailScreen .metadata-label {
+        color: $warning;
+        text-style: bold;
+    }
+
+    PromptDetailScreen .metadata-value {
+        color: $success;
+    }
+
+    PromptDetailScreen .prompt-section {
+        background: $surface;
+        border: solid $primary;
+        padding: 1;
+        margin-bottom: 1;
+    }
+
+    PromptDetailScreen .prompt-content {
+        color: $text;
+    }
+
+    PromptDetailScreen #status-bar {
+        dock: bottom;
+        height: 1;
+        background: $primary-darken-2;
+        color: $text;
+        padding: 0 1;
+    }
+    """
+
+    BINDINGS = [
+        Binding('escape', 'go_back', 'Back', show=True),
+        Binding('c', 'copy_system', 'Copy System', show=True),
+        Binding('u', 'copy_user', 'Copy User', show=True),
+        Binding('q', 'quit', 'Quit', show=True),
+    ]
+
+    def __init__(self, prompt: Prompt, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.prompt = prompt
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical(id='detail-header'):
+            yield Static(f'Prompt: {self.prompt.name}', id='detail-header-text')
+        with VerticalScroll(id='detail-scroll'):
+            with Vertical(classes='metadata-section'):
+                yield Static('[bold yellow]Name:[/]', classes='metadata-label')
+                yield Static(f'[green]{self.prompt.name}[/]', classes='metadata-value')
+                yield Static('[bold yellow]Group:[/]', classes='metadata-label')
+                yield Static(f'[blue]{self.prompt.group}[/]', classes='metadata-value')
+                yield Static('[bold yellow]Description:[/]', classes='metadata-label')
+                yield Static(self.prompt.description or '(none)', classes='metadata-value')
+                yield Static('[bold yellow]Tags:[/]', classes='metadata-label')
+                yield Static(
+                    f'[green]{", ".join(self.prompt.tags) or "(none)"}[/]',
+                    classes='metadata-value',
+                )
+            yield Static('SYSTEM PROMPT', classes='section-header')
+            with Vertical(classes='prompt-section'):
+                system_content = self.prompt.system_prompt or '(empty)'
+                yield Static(system_content, classes='prompt-content', id='system-prompt-content')
+            if self.prompt.user_prompt:
+                yield Static('USER PROMPT', classes='section-header')
+                with Vertical(classes='prompt-section'):
+                    yield Static(self.prompt.user_prompt, classes='prompt-content', id='user-prompt-content')
+        yield Static('Press c to copy system prompt, u to copy user prompt, Esc to go back', id='status-bar')
+        yield Footer()
+
+    def action_go_back(self) -> None:
+        """Return to the list view."""
+        self.app.pop_screen()
+
+    def action_copy_system(self) -> None:
+        """Copy the system prompt to clipboard."""
+        try:
+            import pyperclip
+
+            pyperclip.copy(self.prompt.system_prompt)
+            self._update_status(f'Copied system prompt for "{self.prompt.name}" to clipboard')
+        except Exception as e:
+            self._update_status(f'Failed to copy: {e}')
+
+    def action_copy_user(self) -> None:
+        """Copy the user prompt to clipboard."""
+        if not self.prompt.user_prompt:
+            self._update_status('No user prompt to copy')
+            return
+        try:
+            import pyperclip
+
+            pyperclip.copy(self.prompt.user_prompt)
+            self._update_status(f'Copied user prompt for "{self.prompt.name}" to clipboard')
+        except Exception as e:
+            self._update_status(f'Failed to copy: {e}')
+
+    def _update_status(self, message: str) -> None:
+        """Update the status bar."""
+        status = self.query_one('#status-bar', Static)
+        status.update(message)
+
+
 class SearchInput(Input):
     """Search input with fuzzy matching."""
 
@@ -233,7 +374,7 @@ class PromptButlerApp(App):
         Binding('escape', 'clear_search', 'Clear', show=True),
         Binding('j', 'cursor_down', 'Down', show=False),
         Binding('k', 'cursor_up', 'Up', show=False),
-        Binding('enter', 'select_prompt', 'Select', show=True),
+        Binding('enter', 'select_row', 'Select', show=True),
         Binding('c', 'copy_prompt', 'Copy', show=True),
         Binding('r', 'refresh', 'Refresh', show=True),
         Binding('tab', 'focus_next', 'Next', show=False),
@@ -357,17 +498,11 @@ class PromptButlerApp(App):
         if table.has_focus:
             table.action_cursor_up()
 
-    def action_select_prompt(self) -> None:
-        """Select the current prompt and show details."""
+    def action_select_row(self) -> None:
+        """Forward select action to the data table."""
         table = self.query_one('#prompt-table', PromptTable)
-        if table.cursor_row is not None and self.filtered_prompts:
-            row_key = table.get_row_at(table.cursor_row)
-            if row_key:
-                prompt_name = str(row_key[0])
-                prompt = next((p for p in self.filtered_prompts if p.name == prompt_name), None)
-                if prompt:
-                    detail_panel = self.query_one('#detail-panel', PromptDetailPanel)
-                    detail_panel.show_prompt(prompt)
+        if table.has_focus:
+            table.action_select_cursor()
 
     def action_copy_prompt(self) -> None:
         """Copy the selected prompt's system prompt to clipboard."""
@@ -435,6 +570,15 @@ class PromptButlerApp(App):
             if prompt:
                 detail_panel = self.query_one('#detail-panel', PromptDetailPanel)
                 detail_panel.show_prompt(prompt)
+
+    @on(DataTable.RowSelected, '#prompt-table')
+    def on_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Handle row selection (Enter) to open full detail screen."""
+        if event.row_key and self.filtered_prompts:
+            prompt_name = str(event.row_key.value)
+            prompt = next((p for p in self.filtered_prompts if p.name == prompt_name), None)
+            if prompt:
+                self.push_screen(PromptDetailScreen(prompt))
 
 
 def run_tui(storage: PromptStorage | None = None) -> None:

@@ -10,7 +10,7 @@ from textual.widgets import Static
 
 from prompt_butler.models import Prompt
 from prompt_butler.services.storage import PromptStorage
-from prompt_butler.tui.app import FilterSidebar, PromptButlerApp, PromptDetailPanel, PromptTable
+from prompt_butler.tui.app import FilterSidebar, PromptButlerApp, PromptDetailPanel, PromptDetailScreen, PromptTable
 
 
 @pytest.fixture
@@ -288,3 +288,158 @@ class TestEmptyState:
             sidebar = app.query_one('#sidebar', FilterSidebar)
             assert sidebar.groups == []
             assert sidebar.tags == []
+
+
+class TestPromptDetailScreen:
+    """Tests for the full-screen prompt detail view."""
+
+    @pytest.mark.asyncio
+    async def test_enter_opens_detail_screen(self, storage, sample_prompts):
+        """Test that pressing Enter on a prompt opens the detail screen."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            assert len(app.screen_stack) == 2
+            assert isinstance(app.screen, PromptDetailScreen)
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_shows_prompt_name(self, storage, sample_prompts):
+        """Test that detail screen shows prompt name."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            header_text = app.screen.query_one('#detail-header-text', Static)
+            assert 'code-review' in str(header_text.render())
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_shows_system_prompt(self, storage, sample_prompts):
+        """Test that detail screen shows system prompt content."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            system_content = app.screen.query_one('#system-prompt-content', Static)
+            assert 'expert code reviewer' in str(system_content.render())
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_shows_user_prompt(self, storage, sample_prompts):
+        """Test that detail screen shows user prompt content."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            user_content = app.screen.query_one('#user-prompt-content', Static)
+            assert 'Review this code' in str(user_content.render())
+
+    @pytest.mark.asyncio
+    async def test_escape_returns_to_list_view(self, storage, sample_prompts):
+        """Test that pressing Escape returns from detail to list view."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            assert len(app.screen_stack) == 2
+            await pilot.press('escape')
+            await pilot.pause()
+            assert len(app.screen_stack) == 1
+            assert not isinstance(app.screen, PromptDetailScreen)
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_copy_system_prompt(self, storage, sample_prompts, monkeypatch):
+        """Test that pressing c copies system prompt to clipboard."""
+        copied_text = []
+
+        def mock_copy(text):
+            copied_text.append(text)
+
+        monkeypatch.setattr('pyperclip.copy', mock_copy)
+
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            await pilot.press('c')
+            assert len(copied_text) == 1
+            assert 'expert code reviewer' in copied_text[0]
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_copy_user_prompt(self, storage, sample_prompts, monkeypatch):
+        """Test that pressing u copies user prompt to clipboard."""
+        copied_text = []
+
+        def mock_copy(text):
+            copied_text.append(text)
+
+        monkeypatch.setattr('pyperclip.copy', mock_copy)
+
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            await pilot.press('u')
+            assert len(copied_text) == 1
+            assert 'Review this code' in copied_text[0]
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_shows_metadata(self, storage, sample_prompts):
+        """Test that detail screen shows all metadata (group, description, tags)."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            metadata_values = app.screen.query('.metadata-value')
+            metadata_text = ' '.join(str(w.render()) for w in metadata_values)
+            assert 'development' in metadata_text
+            assert 'code' in metadata_text
+            assert 'review' in metadata_text
+
+    @pytest.mark.asyncio
+    async def test_detail_screen_q_quits_app(self, storage, sample_prompts):
+        """Test that pressing q quits the application from detail screen."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            await pilot.press('q')
+
+    @pytest.mark.asyncio
+    async def test_prompt_without_user_prompt_hides_section(self, storage):
+        """Test that detail screen doesn't show user section if no user prompt."""
+        prompt_no_user = Prompt(
+            name='no-user-prompt',
+            description='Has no user prompt',
+            system_prompt='System prompt only',
+            user_prompt='',
+            tags=['test'],
+            group='default',
+        )
+        storage.create(prompt_no_user)
+
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            user_sections = app.screen.query('#user-prompt-content')
+            assert len(user_sections) == 0
