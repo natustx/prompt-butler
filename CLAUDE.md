@@ -8,3 +8,7 @@
 ## Important Files to Read
 - **@docs/STANDARD-CODING-GUIDELINES.md** - Standard coding guidelines
 
+<!-- agent-config:rules:start -->
+@/Users/me/prj/agent-config/rules/optional/beads.md
+@/Users/me/prj/agent-config/rules/optional/mandatory-skill-activation.md
+<!-- agent-config:rules:end -->
