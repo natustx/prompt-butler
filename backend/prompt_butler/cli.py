@@ -494,6 +494,94 @@ def cmd_serve(args: Namespace) -> int:
     return 0
 
 
+def cmd_index(args: Namespace) -> int:
+    """Rebuild the in-memory prompt index."""
+    storage = get_storage()
+
+    prompts = storage.list()
+    groups = storage.list_groups()
+
+    if args.json:
+        output_json({
+            'status': 'indexed',
+            'prompts_count': len(prompts),
+            'groups_count': len(groups),
+            'groups': groups,
+        })
+    else:
+        console.print(f'[green]Indexed {len(prompts)} prompt(s) in {len(groups)} group(s).[/green]')
+        if groups:
+            console.print(f'[cyan]Groups:[/cyan] {", ".join(groups)}')
+
+    return 0
+
+
+def cmd_config(args: Namespace) -> int:
+    """Show or edit configuration."""
+    from prompt_butler.services.config import ConfigService
+
+    config_service = ConfigService()
+
+    if args.edit:
+        config_service.load()
+        if not config_service.config_file_path.exists():
+            config_service.save()
+
+        editor = config_service.get_editor()
+        result = subprocess.run([editor, str(config_service.config_file_path)], check=False)
+        if result.returncode != 0:
+            error_console.print('[red]Editor exited with an error.[/red]')
+            return 1
+        console.print('[green]Configuration updated.[/green]')
+        return 0
+
+    if args.key:
+        if args.value is not None:
+            if config_service.set(args.key, args.value):
+                if args.json:
+                    output_json({'status': 'updated', 'key': args.key, 'value': args.value})
+                else:
+                    console.print(f'[green]Set {args.key} = {args.value}[/green]')
+                return 0
+            else:
+                if args.json:
+                    output_json({'status': 'error', 'message': f"Unknown config key: '{args.key}'"})
+                else:
+                    error_console.print(f"[red]Unknown config key: '{args.key}'[/red]")
+                return 1
+        else:
+            value = config_service.get(args.key)
+            if value is None:
+                if args.json:
+                    output_json({'status': 'error', 'message': f"Unknown config key: '{args.key}'"})
+                else:
+                    error_console.print(f"[red]Unknown config key: '{args.key}'[/red]")
+                return 1
+            if args.json:
+                output_json({'key': args.key, 'value': value})
+            else:
+                console.print(f'{args.key} = {value}')
+            return 0
+
+    config_data = config_service.as_dict()
+
+    if args.json:
+        output_json({'config_file': str(config_service.config_file_path), **config_data})
+    else:
+        console.print(f'[bold cyan]Config file:[/bold cyan] {config_service.config_file_path}')
+        console.print()
+        for key, value in config_data.items():
+            console.print(f'[cyan]{key}:[/cyan] {value}')
+
+    return 0
+
+
+def cmd_tui(args: Namespace) -> int:
+    """Launch the TUI application."""
+    error_console.print('[yellow]TUI is not yet implemented. Coming soon![/yellow]')
+    return 1
+
+
 def main() -> int:
     """Main CLI entry point for Prompt Butler."""
     parser = ArgumentParser(
@@ -581,6 +669,20 @@ def main() -> int:
     server_parser.add_argument('--port', type=int, default=8000, help='Port to bind to')
     server_parser.add_argument('--reload', action='store_true', help='Enable auto-reload')
 
+    # Index command
+    index_parser = subparsers.add_parser('index', help='Rebuild the prompt index')
+    index_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # Config command
+    config_parser = subparsers.add_parser('config', help='Show or edit configuration')
+    config_parser.add_argument('key', nargs='?', help='Config key to get or set')
+    config_parser.add_argument('value', nargs='?', help='Value to set (if setting)')
+    config_parser.add_argument('--edit', '-e', action='store_true', help='Open config in $EDITOR')
+    config_parser.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # TUI command
+    subparsers.add_parser('tui', help='Launch TUI application')
+
     args = parser.parse_args()
 
     commands = {
@@ -593,6 +695,9 @@ def main() -> int:
         'clone': cmd_clone,
         'migrate': cmd_migrate,
         'serve': cmd_serve,
+        'index': cmd_index,
+        'config': cmd_config,
+        'tui': cmd_tui,
     }
 
     if args.command in commands:

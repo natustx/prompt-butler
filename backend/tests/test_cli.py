@@ -15,10 +15,13 @@ import pytest
 from prompt_butler.cli import (
     cmd_add,
     cmd_clone,
+    cmd_config,
     cmd_copy,
     cmd_delete,
+    cmd_index,
     cmd_list,
     cmd_show,
+    cmd_tui,
     fuzzy_match,
     main,
     prompt_to_dict,
@@ -448,3 +451,164 @@ class TestMainEntryPoint:
         captured = capsys.readouterr()
         data = json.loads(captured.out)
         assert data['name'] == 'test-prompt'
+
+
+class TestCmdIndex:
+    """Tests for pb index command."""
+
+    def test_index_empty_storage(self, mock_storage, capsys):
+        args = Namespace(json=False)
+        result = cmd_index(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'Indexed 0 prompt(s)' in captured.out
+
+    def test_index_with_prompts(self, mock_storage, sample_prompt, capsys):
+        mock_storage.create(sample_prompt)
+        mock_storage.create(Prompt(name='second', system_prompt='sys', group='other'))
+
+        args = Namespace(json=False)
+        result = cmd_index(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'Indexed 2 prompt(s)' in captured.out
+        assert '2 group(s)' in captured.out
+
+    def test_index_with_json_output(self, mock_storage, sample_prompt, capsys):
+        mock_storage.create(sample_prompt)
+
+        args = Namespace(json=True)
+        result = cmd_index(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'indexed'
+        assert data['prompts_count'] == 1
+        assert data['groups_count'] == 1
+        assert 'default' in data['groups']
+
+
+class TestCmdConfig:
+    """Tests for pb config command."""
+
+    @pytest.fixture
+    def config_file(self, tmp_path):
+        """Create a temporary config file path."""
+        return tmp_path / 'config.yaml'
+
+    @pytest.fixture
+    def mock_config_service(self, config_file, monkeypatch):
+        """Patch ConfigService to use temporary config file."""
+        from prompt_butler.services.config import ConfigService
+
+        service = ConfigService(config_path=config_file)
+
+        def mock_init(self, config_path=None):
+            self.config_path = config_file
+            self._config = None
+
+        monkeypatch.setattr(ConfigService, '__init__', mock_init)
+        return service
+
+    def test_config_shows_all_values(self, mock_config_service, capsys):
+        args = Namespace(key=None, value=None, edit=False, json=False)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'prompts_dir:' in captured.out
+        assert 'default_group:' in captured.out
+
+    def test_config_with_json_output(self, mock_config_service, capsys):
+        args = Namespace(key=None, value=None, edit=False, json=True)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert 'prompts_dir' in data
+        assert 'default_group' in data
+        assert 'config_file' in data
+
+    def test_config_get_specific_key(self, mock_config_service, capsys):
+        args = Namespace(key='prompts_dir', value=None, edit=False, json=False)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'prompts_dir' in captured.out
+
+    def test_config_get_specific_key_json(self, mock_config_service, capsys):
+        args = Namespace(key='prompts_dir', value=None, edit=False, json=True)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['key'] == 'prompts_dir'
+
+    def test_config_set_value(self, mock_config_service, capsys):
+        args = Namespace(key='prompts_dir', value='/new/path', edit=False, json=False)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'Set prompts_dir' in captured.out
+
+    def test_config_set_value_json(self, mock_config_service, capsys):
+        args = Namespace(key='prompts_dir', value='/new/path', edit=False, json=True)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data['status'] == 'updated'
+        assert data['key'] == 'prompts_dir'
+        assert data['value'] == '/new/path'
+
+    def test_config_unknown_key_fails(self, mock_config_service, capsys):
+        args = Namespace(key='nonexistent', value=None, edit=False, json=False)
+        result = cmd_config(args)
+
+        assert result == 1
+
+    def test_config_set_unknown_key_fails(self, mock_config_service, capsys):
+        args = Namespace(key='nonexistent', value='val', edit=False, json=False)
+        result = cmd_config(args)
+
+        assert result == 1
+
+    def test_config_edit_opens_editor(self, mock_config_service, monkeypatch, capsys):
+        monkeypatch.setenv('EDITOR', 'true')
+
+        args = Namespace(key=None, value=None, edit=True, json=False)
+        result = cmd_config(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert 'Configuration updated' in captured.out
+
+    def test_config_edit_creates_file_if_missing(self, mock_config_service, config_file, monkeypatch, capsys):
+        monkeypatch.setenv('EDITOR', 'true')
+        assert not config_file.exists()
+
+        args = Namespace(key=None, value=None, edit=True, json=False)
+        result = cmd_config(args)
+
+        assert result == 0
+        assert config_file.exists()
+
+
+class TestCmdTui:
+    """Tests for pb tui command."""
+
+    def test_tui_not_implemented(self, capsys):
+        args = Namespace()
+        result = cmd_tui(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert 'not yet implemented' in captured.err.lower()
