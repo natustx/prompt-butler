@@ -6,11 +6,19 @@ Tests use Textual's built-in testing framework with real storage.
 from __future__ import annotations
 
 import pytest
-from textual.widgets import Static
+from textual.widgets import Button, Input, Static, TextArea
 
 from prompt_butler.models import Prompt
 from prompt_butler.services.storage import PromptStorage
-from prompt_butler.tui.app import FilterSidebar, PromptButlerApp, PromptDetailPanel, PromptDetailScreen, PromptTable
+from prompt_butler.tui.app import (
+    AddEditPromptScreen,
+    DeleteConfirmScreen,
+    FilterSidebar,
+    PromptButlerApp,
+    PromptDetailPanel,
+    PromptDetailScreen,
+    PromptTable,
+)
 
 
 @pytest.fixture
@@ -443,3 +451,265 @@ class TestPromptDetailScreen:
             await pilot.pause()
             user_sections = app.screen.query('#user-prompt-content')
             assert len(user_sections) == 0
+
+
+class TestAddEditPromptScreen:
+    """Tests for the add/edit prompt modal."""
+
+    @pytest.mark.asyncio
+    async def test_a_key_opens_add_screen(self, storage, sample_prompts):
+        """Test that pressing 'a' opens the add prompt screen."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            assert isinstance(app.screen, AddEditPromptScreen)
+            assert not app.screen.is_edit_mode
+
+    @pytest.mark.asyncio
+    async def test_add_screen_shows_empty_form(self, storage, sample_prompts):
+        """Test that add screen shows empty form fields."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            name_input = app.screen.query_one('#name-input', Input)
+            assert name_input.value == ''
+            assert not name_input.disabled
+
+    @pytest.mark.asyncio
+    async def test_escape_cancels_add_screen(self, storage, sample_prompts):
+        """Test that pressing Escape closes the add screen."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            assert isinstance(app.screen, AddEditPromptScreen)
+            await pilot.press('escape')
+            await pilot.pause()
+            assert not isinstance(app.screen, AddEditPromptScreen)
+
+    @pytest.mark.asyncio
+    async def test_e_key_opens_edit_screen(self, storage, sample_prompts):
+        """Test that pressing 'e' opens the edit prompt screen."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('e')
+            await pilot.pause()
+            assert isinstance(app.screen, AddEditPromptScreen)
+            assert app.screen.is_edit_mode
+
+    @pytest.mark.asyncio
+    async def test_edit_screen_shows_populated_form(self, storage, sample_prompts):
+        """Test that edit screen shows existing prompt data."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('e')
+            await pilot.pause()
+            name_input = app.screen.query_one('#name-input', Input)
+            assert name_input.value == 'code-review'
+            assert name_input.disabled
+
+    @pytest.mark.asyncio
+    async def test_add_screen_has_textarea_for_prompts(self, storage, sample_prompts):
+        """Test that add screen has TextArea widgets for system/user prompts."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            system_area = app.screen.query_one('#system-prompt-area', TextArea)
+            user_area = app.screen.query_one('#user-prompt-area', TextArea)
+            assert system_area is not None
+            assert user_area is not None
+
+    @pytest.mark.asyncio
+    async def test_add_screen_has_save_button(self, storage, sample_prompts):
+        """Test that add screen has a save button."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            save_btn = app.screen.query_one('#save-btn', Button)
+            assert save_btn is not None
+
+    @pytest.mark.asyncio
+    async def test_edit_from_detail_screen(self, storage, sample_prompts):
+        """Test that pressing 'e' from detail screen opens edit mode."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            assert isinstance(app.screen, PromptDetailScreen)
+            await pilot.press('e')
+            await pilot.pause()
+            assert isinstance(app.screen, AddEditPromptScreen)
+            assert app.screen.is_edit_mode
+
+
+class TestDeleteConfirmScreen:
+    """Tests for the delete confirmation modal."""
+
+    @pytest.mark.asyncio
+    async def test_d_key_opens_delete_confirm(self, storage, sample_prompts):
+        """Test that pressing 'd' opens the delete confirmation dialog."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('d')
+            await pilot.pause()
+            assert isinstance(app.screen, DeleteConfirmScreen)
+
+    @pytest.mark.asyncio
+    async def test_delete_confirm_shows_prompt_name(self, storage, sample_prompts):
+        """Test that delete confirm dialog shows the prompt name."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('d')
+            await pilot.pause()
+            message = app.screen.query_one('#dialog-message', Static)
+            assert 'code-review' in str(message.render())
+
+    @pytest.mark.asyncio
+    async def test_escape_cancels_delete(self, storage, sample_prompts):
+        """Test that pressing Escape cancels the delete dialog."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            initial_count = len(app.prompts)
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('d')
+            await pilot.pause()
+            await pilot.press('escape')
+            await pilot.pause()
+            assert not isinstance(app.screen, DeleteConfirmScreen)
+            assert len(storage.list()) == initial_count
+
+    @pytest.mark.asyncio
+    async def test_confirm_delete_removes_prompt(self, storage, sample_prompts):
+        """Test that confirming delete removes the prompt."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            initial_count = len(app.prompts)
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('d')
+            await pilot.pause()
+            confirm_btn = app.screen.query_one('#confirm-btn', Button)
+            await pilot.click(confirm_btn)
+            await pilot.pause()
+            assert len(storage.list()) == initial_count - 1
+
+    @pytest.mark.asyncio
+    async def test_delete_from_detail_screen(self, storage, sample_prompts):
+        """Test that pressing 'd' from detail screen opens delete dialog."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('enter')
+            await pilot.pause()
+            assert isinstance(app.screen, PromptDetailScreen)
+            await pilot.press('d')
+            await pilot.pause()
+            assert isinstance(app.screen, DeleteConfirmScreen)
+
+    @pytest.mark.asyncio
+    async def test_delete_has_cancel_button(self, storage, sample_prompts):
+        """Test that delete dialog has a cancel button."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('d')
+            await pilot.pause()
+            cancel_btn = app.screen.query_one('#cancel-btn', Button)
+            assert cancel_btn is not None
+
+
+class TestAddEditFormValidation:
+    """Tests for form validation in add/edit screen."""
+
+    @pytest.mark.asyncio
+    async def test_save_requires_name(self, storage, sample_prompts):
+        """Test that saving without a name shows error."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            system_area = app.screen.query_one('#system-prompt-area', TextArea)
+            system_area.text = 'Test system prompt'
+            await pilot.press('ctrl+s')
+            await pilot.pause()
+            status = app.screen.query_one('#status-bar', Static)
+            assert 'Name is required' in str(status.render())
+
+    @pytest.mark.asyncio
+    async def test_save_requires_system_prompt(self, storage, sample_prompts):
+        """Test that saving without a system prompt shows error."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            name_input = app.screen.query_one('#name-input', Input)
+            name_input.value = 'test-prompt'
+            await pilot.press('ctrl+s')
+            await pilot.pause()
+            status = app.screen.query_one('#status-bar', Static)
+            assert 'System prompt is required' in str(status.render())
+
+    @pytest.mark.asyncio
+    async def test_tags_field_accepts_comma_separated(self, storage, sample_prompts):
+        """Test that tags field properly parses comma-separated values."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('a')
+            await pilot.pause()
+            tags_input = app.screen.query_one('#tags-input', Input)
+            tags_input.value = 'tag1, tag2, tag3'
+            name_input = app.screen.query_one('#name-input', Input)
+            name_input.value = 'test-prompt'
+            system_area = app.screen.query_one('#system-prompt-area', TextArea)
+            system_area.text = 'Test system prompt'
+            save_btn = app.screen.query_one('#save-btn', Button)
+            await pilot.click(save_btn)
+            await pilot.pause()
+            prompt = storage.get('test-prompt', 'default')
+            assert prompt is not None
+            assert prompt.tags == ['tag1', 'tag2', 'tag3']
+
+    @pytest.mark.asyncio
+    async def test_edit_preserves_existing_data(self, storage, sample_prompts):
+        """Test that editing preserves existing prompt data."""
+        app = PromptButlerApp(storage=storage)
+        async with app.run_test() as pilot:
+            table = app.query_one('#prompt-table', PromptTable)
+            table.focus()
+            await pilot.press('e')
+            await pilot.pause()
+            desc_input = app.screen.query_one('#description-input', Input)
+            assert desc_input.value == 'Reviews code for best practices'
