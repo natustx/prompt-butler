@@ -1,8 +1,7 @@
-
 from fastapi import APIRouter, HTTPException, status
 
-from models import Prompt, PromptCreate, PromptResponse, PromptUpdate
-from services.storage import PromptNotFoundError, StorageError, storage_service
+from prompt_butler.models import Prompt, PromptCreate, PromptResponse, PromptUpdate
+from prompt_butler.services.storage import PromptNotFoundError, StorageError, storage_service
 
 router = APIRouter(prefix='/api/prompts', tags=['prompts'], responses={404: {'description': 'Prompt not found'}})
 

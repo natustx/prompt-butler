@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import prompts
-from services.storage import InvalidPromptDataError, PromptNotFoundError, StorageError
+from prompt_butler.routers import prompts
+from prompt_butler.services.storage import InvalidPromptDataError, PromptNotFoundError, StorageError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info('Starting Prompt Manager API...')
+    logger.info('Starting Prompt Butler API...')
     yield
-    logger.info('Shutting down Prompt Manager API...')
+    logger.info('Shutting down Prompt Butler API...')
 
 
 app = FastAPI(
-    title='Prompt Manager API',
+    title='Prompt Butler API',
     description='API for managing AI prompts with YAML storage',
     version='1.0.0',
     lifespan=lifespan,
@@ -54,15 +54,15 @@ async def storage_error_handler(request, exc: StorageError):
 
 @app.get('/')
 async def root():
-    return {'status': 'healthy', 'service': 'Prompt Manager API', 'version': '1.0.0'}
+    return {'status': 'healthy', 'service': 'Prompt Butler API', 'version': '1.0.0'}
 
 
 @app.get('/health')
 async def health_check():
-    return {'status': 'healthy', 'service': 'Prompt Manager API'}
+    return {'status': 'healthy', 'service': 'Prompt Butler API'}
 
 
 if __name__ == '__main__':
     import uvicorn
 
-    uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True, log_level='info')
+    uvicorn.run('prompt_butler.main:app', host='0.0.0.0', port=8000, reload=True, log_level='info')

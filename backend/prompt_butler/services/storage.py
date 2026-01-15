@@ -5,7 +5,7 @@ from typing import Optional
 
 import yaml
 
-from models import Prompt
+from prompt_butler.models import Prompt
 
 
 class StorageService:

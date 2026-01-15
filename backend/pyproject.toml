@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prompt-manager-backend"
+name = "prompt-butler"
 version = "1.0.0"
-description = "FastAPI backend for managing AI prompts with YAML storage"
+description = "AI prompt management tool with CLI and API"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -26,12 +26,18 @@ dev = [
     "ruff>=0.5.0",
 ]
 
-[tool.setuptools]
-packages = ["services", "routers", "models"]
+[project.scripts]
+pb = "prompt_butler.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["prompt_butler*"]
 
 [tool.ruff]
 line-length = 120
 target-version = "py39"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
