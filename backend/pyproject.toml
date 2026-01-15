@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["services", "routers", "models"]
+packages = ["services", "routers"]
 
 [tool.ruff]
 line-length = 120
