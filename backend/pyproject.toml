@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prompt-manager-backend"
+name = "prompt-butler"
 version = "1.0.0"
-description = "FastAPI backend for managing AI prompts with YAML storage"
+description = "FastAPI backend for managing AI prompts with markdown frontmatter storage"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -15,7 +15,17 @@ dependencies = [
     "pydantic==2.10.3",
     "python-multipart==0.0.12",
     "python-dotenv==1.0.1",
+    "python-frontmatter>=1.1.0",
+    "rapidfuzz>=3.0.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pyperclip>=1.8.0",
+    "textual>=3.0.0",
 ]
+
+[project.scripts]
+pb = "prompt_butler.cli:app"
+pb-tui = "prompt_butler.tui.app:main"
 
 [project.optional-dependencies]
 dev = [
@@ -27,7 +37,12 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["services", "routers"]
+packages = [
+    "prompt_butler",
+    "prompt_butler.services",
+    "prompt_butler.routers",
+    "prompt_butler.tui",
+]
 
 [tool.ruff]
 line-length = 120

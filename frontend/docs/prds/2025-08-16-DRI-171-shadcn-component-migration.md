@@ -1,5 +1,5 @@
 # Overview
-Migrate the Prompt Manager frontend from custom components to shadcn/ui component library to improve development velocity, accessibility, and UI consistency while reducing maintenance burden.
+Migrate the Prompt Butler frontend from custom components to shadcn/ui component library to improve development velocity, accessibility, and UI consistency while reducing maintenance burden.
 
 # Core Features
 - **Shadcn/ui Setup**: Initialize shadcn with proper configuration for existing Tailwind setup
@@ -15,7 +15,7 @@ Migrate the Prompt Manager frontend from custom components to shadcn/ui componen
 - **Form Validation**: Add zod-based validation with react-hook-form integration
 
 # User Experience
-- **User Personas**: Developers maintaining and extending the prompt manager
+- **User Personas**: Developers maintaining and extending Prompt Butler
 - **Key User Flows**: 
   - Creating/editing prompts with improved form UX
   - Viewing prompt lists with consistent styling

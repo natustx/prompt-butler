@@ -1,4 +1,4 @@
-import type { Prompt, PromptCreate, PromptUpdate } from '../types/prompt';
+import type { GroupCount, Prompt, PromptCreate, PromptUpdate, TagCount } from '../types/prompt';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -85,6 +85,34 @@ export const promptApi = {
       method: 'DELETE',
     });
     return handleResponse<void>(response);
+  },
+};
+
+export const groupApi = {
+  // List all groups with counts
+  async listGroups(): Promise<GroupCount[]> {
+    const response = await fetch(`${API_BASE_URL}/api/groups/`);
+    return handleResponse<GroupCount[]>(response);
+  },
+
+  // Rename a group
+  async renameGroup(oldGroup: string, newGroup: string): Promise<{ updated_count: number }> {
+    const response = await fetch(`${API_BASE_URL}/api/groups/rename`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ old_group: oldGroup, new_group: newGroup }),
+    });
+    return handleResponse<{ updated_count: number }>(response);
+  },
+};
+
+export const tagApi = {
+  // List all tags with counts
+  async listTags(): Promise<TagCount[]> {
+    const response = await fetch(`${API_BASE_URL}/api/tags/`);
+    return handleResponse<TagCount[]>(response);
   },
 };
 

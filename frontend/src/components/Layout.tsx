@@ -1,72 +1,90 @@
-import { Link, Outlet } from 'react-router-dom';
-import { Moon, Sun, FileText, Plus } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Terminal, Plus } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 export function Layout() {
-  const [isDark, setIsDark] = useState(() => {
-    const stored = localStorage.getItem('theme');
-    if (stored) {
-      return stored === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const location = useLocation();
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-  };
+    document.documentElement.classList.add('dark');
+  }, []);
 
   return (
-    <div className="min-h-screen bg-page transition-colors">
-      <header className="bg-surface shadow-sm border-b border-default">
+    <div className="min-h-screen bg-page">
+      <header className="terminal-header border-b border-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14">
             <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-2">
-                <FileText className="h-6 w-6 text-primary" />
-                <span className="text-xl font-semibold text-default">
-                  Prompt Manager
-                </span>
+              <Link to="/" className="flex items-center gap-3 group">
+                <div className="flex items-center justify-center w-8 h-8 border border-primary text-primary group-hover:bg-primary group-hover:text-black transition-all">
+                  <Terminal className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-primary glow-green tracking-wider">
+                    PROMPT_BUTLER
+                  </span>
+                  <span className="text-[10px] text-muted-foreground tracking-widest">
+                    v1.0.0
+                  </span>
+                </div>
               </Link>
             </div>
             
-            <nav className="flex items-center space-x-4">
-              <Button variant="ghost" asChild>
-                <Link to="/">Prompts</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/new">
-                  <Plus className="h-4 w-4" />
-                  <span>New Prompt</span>
-                </Link>
-              </Button>
+            <nav className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                aria-label="Toggle theme"
+                size="sm"
+                asChild
+                className={location.pathname === '/' ? 'border-primary text-primary' : ''}
               >
-                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                <Link to="/">[PROMPTS]</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/new">
+                  <Plus className="h-3 w-3" />
+                  <span>NEW</span>
+                </Link>
               </Button>
             </nav>
           </div>
         </div>
+
+        <div className="border-t border-border bg-surface">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-6 text-[10px] text-muted-foreground tracking-wider">
+              <div className="flex items-center gap-4">
+                <span className="text-primary">●</span>
+                <span>SYS:ONLINE</span>
+                <span className="text-border">│</span>
+                <span>MEM:OK</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-accent">PATH:</span>
+                <span className="text-foreground">{location.pathname}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </header>
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16">
         <Outlet />
       </main>
+
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center h-8 text-[10px] text-muted-foreground tracking-widest">
+            <span className="text-primary">■</span>
+            <span className="mx-2">PROMPT_BUTLER</span>
+            <span className="text-border">│</span>
+            <span className="mx-2">TERMINAL_INTERFACE</span>
+            <span className="text-border">│</span>
+            <span className="mx-2 text-accent">2024</span>
+            <span className="text-primary">■</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

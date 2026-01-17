@@ -4,12 +4,43 @@ vars:
   PYTHON: .venv/bin/python
 
 tasks:
+  # Combined tasks
+  setup:
+    desc: Install all dependencies (backend and frontend)
+    deps:
+      - backend:setup
+      - frontend:setup
+
+  dev:
+    desc: Start all development servers in parallel
+    deps:
+      - backend:setup
+      - frontend:setup
+    cmds:
+      - |
+        trap 'kill 0' EXIT
+        task backend:dev &
+        task frontend:dev &
+        wait
+
+  lint:
+    desc: Run all linters
+    deps:
+      - backend:lint
+      - frontend:lint
+
+  test:
+    desc: Run all tests
+    cmds:
+      - task: backend:test
+      - task: frontend:test
+
   # Backend tasks
   backend:setup:
     desc: Setup backend virtual environment and install dependencies
     dir: backend
     cmds:
-      - uv venv ../.venv
+      - uv venv --python "$(cat ../.python-version)" ../.venv
       - uv pip install -e .
       - uv pip install -e ".[dev]"
       - echo "Backend setup complete"
@@ -20,8 +51,33 @@ tasks:
     deps:
       - backend:setup
     cmds:
-      - ../.venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+      - ../.venv/bin/uvicorn prompt_butler.main:app --reload --host 0.0.0.0 --port 8000
 
+  backend:test:
+    desc: Run backend tests
+    dir: backend
+    deps:
+      - backend:setup
+    cmds:
+      - ../.venv/bin/pytest tests/ -v
+
+  backend:lint:
+    desc: Run backend linter (ruff)
+    dir: backend
+    deps:
+      - backend:setup
+    cmds:
+      - ../.venv/bin/ruff check .
+
+  backend:lint:fix:
+    desc: Auto-fix backend lint issues
+    dir: backend
+    deps:
+      - backend:setup
+    cmds:
+      - ../.venv/bin/ruff check . --fix
+
+  # Frontend tasks
   frontend:setup:
     desc: Setup frontend and install dependencies
     dir: frontend
@@ -37,14 +93,43 @@ tasks:
     cmds:
       - npm run dev
 
-  dev:
-    desc: Start all development servers in parallel
+  frontend:lint:
+    desc: Run frontend linter
+    dir: frontend
     deps:
-      - backend:setup
       - frontend:setup
     cmds:
-      - |
-        trap 'kill 0' EXIT
-        task backend:dev &
-        task frontend:dev &
-        wait
+      - npm run lint
+
+  frontend:test:
+    desc: Run frontend tests
+    dir: frontend
+    deps:
+      - frontend:setup
+    cmds:
+      - npm run test
+
+  # CLI tasks
+  cli:install:
+    desc: Install CLI globally via pipx
+    dir: backend
+    cmds:
+      - pipx install . --force
+
+  cli:dev:
+    desc: Install CLI in development mode
+    dir: backend
+    deps:
+      - backend:setup
+    cmds:
+      - uv pip install -e .
+      - echo "CLI installed in dev mode. Run 'source ../.venv/bin/activate' to use pb command."
+
+  # TUI tasks
+  tui:dev:
+    desc: Run TUI in development mode with hot reload
+    dir: backend
+    deps:
+      - backend:setup
+    cmds:
+      - ../.venv/bin/textual run --dev prompt_butler.tui.app:app
