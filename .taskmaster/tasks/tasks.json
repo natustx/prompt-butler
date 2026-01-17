@@ -1,0 +1,299 @@
+{
+  "main": {},
+  "add-tags-test": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize shadcn/ui in the project",
+        "description": "Set up shadcn/ui component library with proper configuration for the existing React + TypeScript + Tailwind CSS setup",
+        "details": "Install shadcn/ui CLI and initialize it in the frontend project. Configure components.json with proper paths, utility functions, and Tailwind configuration. Install required dependencies: clsx, tailwind-merge, class-variance-authority. Set up the lib/utils.ts file with cn utility function. Configure Tailwind CSS to work with shadcn's design tokens and CSS variables. Add core shadcn components: button, input, textarea, label, dialog, alert-dialog, badge, alert. Ensure TypeScript paths are configured correctly for @/ imports.",
+        "testStrategy": "Verify shadcn CLI installation works correctly. Test that components.json is properly configured. Ensure Tailwind CSS compiles without errors. Verify that core components can be imported and rendered without issues. Test dark/light mode functionality is preserved.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install shadcn/ui CLI and initialize configuration",
+            "description": "Install the shadcn/ui CLI tool globally and run the init command to set up the initial configuration for the React + TypeScript + Tailwind project",
+            "dependencies": [],
+            "details": "Run 'npx shadcn@latest init' in the frontend directory. Configure the following options during initialization: TypeScript: yes, Tailwind CSS: yes, src directory: ./src, path aliases: yes (@/). Configure CSS variables for colors: yes. This will create a components.json configuration file and set up the basic file structure.",
+            "status": "done",
+            "testStrategy": "Verify components.json file is created with correct configuration. Check that TypeScript path aliases are properly configured. Ensure Tailwind CSS continues to compile without errors."
+          },
+          {
+            "id": 2,
+            "title": "Install required dependencies and set up utility functions",
+            "description": "Install the core dependencies required by shadcn/ui components and create the utility functions needed for component styling",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "Install required packages: 'clsx', 'tailwind-merge', 'class-variance-authority', '@radix-ui/react-icons'. Create src/lib/utils.ts file with the cn utility function that combines clsx and tailwind-merge. Update tsconfig.app.json to include proper path aliases for '@/*' imports pointing to './src/*'. Verify all imports work correctly.",
+            "status": "done",
+            "testStrategy": "Test that cn utility function works correctly by importing it in a component. Verify that all dependencies install without conflicts. Check that TypeScript path resolution works for @/ imports."
+          },
+          {
+            "id": 3,
+            "title": "Update Tailwind CSS configuration for shadcn design system",
+            "description": "Configure Tailwind CSS to work with shadcn's design tokens, CSS variables, and theme system while preserving existing dark mode functionality",
+            "dependencies": [
+              "1.2"
+            ],
+            "details": "Update the Tailwind configuration to include shadcn's color system with CSS variables. Integrate with existing CSS variables in index.css (:root and .dark classes). Ensure shadcn's color tokens (background, foreground, primary, secondary, muted, accent, destructive, border, input, ring) work alongside existing custom properties. Preserve the current dark mode toggle functionality.",
+            "status": "done",
+            "testStrategy": "Verify Tailwind CSS compiles successfully with new configuration. Test that existing dark mode functionality still works. Check that both existing custom CSS variables and new shadcn variables are available."
+          },
+          {
+            "id": 4,
+            "title": "Install core shadcn/ui components",
+            "description": "Add the essential shadcn/ui components that will be used to replace existing custom components in the application",
+            "dependencies": [
+              "1.3"
+            ],
+            "details": "Install core shadcn components using the CLI: 'npx shadcn@latest add button input textarea label dialog alert-dialog badge alert'. This will create component files in src/components/ui/ directory. Verify each component is properly installed and can be imported. Check that all components respect the existing dark mode theming.",
+            "status": "done",
+            "testStrategy": "Import each installed component in a test file to verify they work. Check that components render correctly in both light and dark modes. Verify no TypeScript errors occur when importing components."
+          },
+          {
+            "id": 5,
+            "title": "Configure Vite and finalize setup",
+            "description": "Update Vite configuration to properly handle the new file structure and ensure all shadcn/ui components work correctly with the build system",
+            "dependencies": [
+              "1.4"
+            ],
+            "details": "Update vite.config.ts to include path aliases configuration matching tsconfig.app.json. Add resolve.alias for '@' to point to path.resolve(__dirname, './src'). Import path module at the top. Test that build process works correctly with new components. Verify hot reload works during development.",
+            "status": "done",
+            "testStrategy": "Run 'npm run build' to ensure production build succeeds. Test 'npm run dev' to verify development server works. Create a simple test component that imports shadcn components to verify everything works end-to-end."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Migrate form components to shadcn/ui",
+        "description": "Replace custom form inputs, textareas, and labels in PromptForm with shadcn/ui equivalents while preserving all existing functionality",
+        "details": "Replace all form elements in PromptForm.tsx with shadcn components: input elements → shadcn Input component, textarea elements → shadcn Textarea component, label elements → shadcn Label component. Maintain all existing styling classes, validation states, error handling, and disabled states. Preserve form submission logic, validation, and event handlers. Update TagInput component to use shadcn input internally. Ensure proper TypeScript types and accessibility attributes are maintained. Keep existing CSS custom properties (bg-primary, text-primary, etc.) working correctly.",
+        "testStrategy": "Test creating new prompts with all form fields. Test editing existing prompts. Verify form validation displays errors correctly. Test form submission and cancellation. Ensure disabled states work during saving. Test tag input functionality with keyboard and mouse interactions.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install and import shadcn/ui Input component",
+            "description": "Add shadcn Input component to the project and import it in PromptForm.tsx",
+            "dependencies": [],
+            "details": "Run `npx shadcn@latest add input` to install the Input component. Import the Input component from '@/components/ui/input' in PromptForm.tsx. This subtask assumes Task 1 (shadcn initialization) is already completed and the lib/utils.ts and components.json are properly configured.",
+            "status": "done",
+            "testStrategy": "Verify the Input component can be imported without TypeScript errors and renders correctly in the browser without breaking existing functionality."
+          },
+          {
+            "id": 2,
+            "title": "Replace input elements with shadcn Input component",
+            "description": "Replace the native HTML input elements in PromptForm.tsx with shadcn Input components while preserving all styling and functionality",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Replace the name input field (lines 176-186) with shadcn Input component. Maintain all existing props: value, onChange, disabled, placeholder, className, id, and error styling. Preserve the error state styling by conditionally applying className with error borders. Keep all accessibility attributes including htmlFor labels. Ensure the disabled state for editing mode still works correctly.",
+            "status": "done",
+            "testStrategy": "Test that the name input field works identically to before - accepts text input, shows validation errors with red border styling, disables correctly in edit mode, and maintains focus behavior."
+          },
+          {
+            "id": 3,
+            "title": "Install and replace textarea elements with shadcn Textarea component",
+            "description": "Add shadcn Textarea component and replace all textarea elements in PromptForm.tsx",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Run `npx shadcn@latest add textarea` to install the Textarea component. Import it from '@/components/ui/textarea'. Replace the description textarea (lines 199-207), system_prompt textarea (lines 240-253), and user_prompt textarea (lines 260-268) with shadcn Textarea components. Maintain all existing props: value, onChange, disabled, rows, placeholder, className, id. Preserve error state styling for system_prompt with conditional border colors. Keep the font-mono and text-sm classes for prompt textareas.",
+            "status": "done",
+            "testStrategy": "Test that all three textarea fields (description, system prompt, user prompt) work correctly - accept text input, maintain proper sizing with rows prop, show validation errors for system prompt, and preserve disabled states during saving."
+          },
+          {
+            "id": 4,
+            "title": "Install and replace label elements with shadcn Label component",
+            "description": "Add shadcn Label component and replace all label elements in PromptForm.tsx",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Run `npx shadcn@latest add label` to install the Label component. Import it from '@/components/ui/label'. Replace all label elements: name label (line 173), description label (line 196), tags label (line 211), system_prompt label (line 237), and user_prompt label (line 257) with shadcn Label components. Maintain htmlFor attributes pointing to correct input IDs. Preserve existing styling classes: 'block text-sm font-medium text-primary mb-2'. Keep the asterisk (*) for required fields in the label text.",
+            "status": "done",
+            "testStrategy": "Test that all labels correctly associate with their form inputs through htmlFor/id relationships, maintain proper styling and spacing, and clicking labels focuses the corresponding input fields."
+          },
+          {
+            "id": 5,
+            "title": "Update TagInput component to use shadcn Input internally",
+            "description": "Modify TagInput component to use shadcn Input instead of native HTML input element",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Import shadcn Input component in TagInput.tsx. Replace the native input element (lines 43-52) with shadcn Input component. Maintain all existing props: type, value, onChange, onKeyDown, onBlur, placeholder, className, disabled. Ensure the Input component receives the same event handlers and maintains the same behavior for adding tags on Enter key and blur events. Test that the TagInput component still works correctly within PromptForm with all existing styling classes applied via the className prop.",
+            "status": "done",
+            "testStrategy": "Test that tag input functionality works identically - typing and pressing Enter adds tags, blur events add tags, tags display correctly below the input, tag removal works, and disabled state prevents tag operations. Verify styling matches the existing design."
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Migrate modal and display components",
+        "description": "Replace DeleteConfirmModal with shadcn AlertDialog and TagPill with shadcn Badge component",
+        "details": "Replace DeleteConfirmModal component with shadcn AlertDialog: use AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel components. Maintain existing modal functionality including backdrop click handling, loading states, error display, and confirmation logic. Replace TagPill component with shadcn Badge component while preserving remove button functionality and styling. Update TagInput to use the new Badge-based TagPill. Ensure proper ARIA labels and accessibility features are maintained.",
+        "testStrategy": "Test delete confirmation modal opens and closes correctly. Verify delete operations work with loading states and error handling. Test backdrop click and escape key functionality. Test tag pills display correctly in forms and lists. Verify tag removal functionality works. Test keyboard navigation in modals.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install and configure shadcn AlertDialog and Badge components",
+            "description": "Add the required shadcn components for modal and tag display functionality to the project using the shadcn CLI",
+            "dependencies": [],
+            "details": "Use 'npx shadcn-ui@latest add alert-dialog' and 'npx shadcn-ui@latest add badge' to install the AlertDialog and Badge components. Verify the components are properly added to the components/ui directory and that all necessary dependencies are installed. Check that the components integrate correctly with the existing Tailwind CSS configuration.",
+            "status": "done",
+            "testStrategy": "Verify the components are installed correctly by checking they can be imported without errors. Test that the components render without breaking the existing styling system."
+          },
+          {
+            "id": 2,
+            "title": "Replace DeleteConfirmModal with shadcn AlertDialog",
+            "description": "Migrate the existing DeleteConfirmModal component to use shadcn AlertDialog components while preserving all current functionality",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Replace the current modal implementation with AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, and AlertDialogCancel. Maintain all existing props and functionality including isOpen/onClose/onConfirm handlers, loading states with LoadingSpinner, error display with AlertCircle icon, backdrop click handling, and escape key functionality. Preserve all existing CSS classes and styling patterns used in the original component.",
+            "status": "done",
+            "testStrategy": "Test that the delete confirmation modal opens and closes correctly. Verify backdrop click and escape key functionality. Test loading states during deletion and error display when deletion fails. Ensure all existing ARIA labels and accessibility features are maintained."
+          },
+          {
+            "id": 3,
+            "title": "Replace TagPill component with shadcn Badge",
+            "description": "Migrate the TagPill component to use the shadcn Badge component while maintaining the remove button functionality and styling",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Replace the existing TagPill implementation with shadcn Badge component. Preserve the onRemove functionality by incorporating the X button within the Badge. Maintain the existing props interface (tag, onRemove, className) and ensure the truncate text behavior is preserved. Keep the existing hover states for the remove button and maintain ARIA labels for accessibility.",
+            "status": "done",
+            "testStrategy": "Test that tags display correctly with proper styling. Verify the remove button functionality works correctly. Test keyboard navigation and screen reader accessibility. Ensure tag truncation works as expected for long tag names."
+          },
+          {
+            "id": 4,
+            "title": "Update TagInput component to use the new Badge-based TagPill",
+            "description": "Modify the TagInput component to work seamlessly with the updated TagPill that now uses shadcn Badge",
+            "dependencies": [
+              "3.3"
+            ],
+            "details": "Update the TagInput component to ensure it works correctly with the new Badge-based TagPill. Verify that the tag display, addition, and removal functionality still works as expected. Ensure the styling integration between the input field and tag pills remains consistent. Update any className props that may need adjustment for the new Badge component styling.",
+            "status": "done",
+            "testStrategy": "Test adding new tags via typing and Enter key. Test removing tags using the X button. Verify tag input placeholder and disabled states work correctly. Test keyboard navigation and focus management within the tag input component."
+          },
+          {
+            "id": 5,
+            "title": "Update PromptList to use migrated components and test integration",
+            "description": "Ensure PromptList page works correctly with the migrated DeleteConfirmModal and TagPill components, and verify all functionality is preserved",
+            "dependencies": [
+              "3.2",
+              "3.4"
+            ],
+            "details": "Test the integration of the migrated components in PromptList.tsx. Verify that the DeleteConfirmModal still works correctly for prompt deletion with proper error handling and loading states. Ensure TagPill components display correctly in the prompt table with proper styling and layout. Update any import statements if necessary and ensure all existing functionality is preserved.",
+            "status": "done",
+            "testStrategy": "Test the complete delete prompt workflow including modal opening, confirmation, and error states. Verify tag display in the prompt list table looks correct and maintains proper spacing. Test responsive behavior and ensure no visual regressions occur. Verify accessibility features remain intact across all interactions."
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Add form validation with zod and enhance feedback components",
+        "description": "Integrate zod-based validation with react-hook-form and implement shadcn alert components for improved error/success feedback",
+        "details": "Install zod and @hookform/resolvers packages. Create validation schemas for prompt creation and editing forms using zod. Integrate react-hook-form with zodResolver in PromptForm component. Replace custom validation logic with zod schema validation. Implement shadcn Alert component for displaying form errors, success messages, and loading states. Replace LoadingSpinner with shadcn loading patterns (Button with loading state, Skeleton components). Update EmptyState component to use shadcn styling patterns. Ensure all validation errors are properly typed and displayed with consistent styling.",
+        "testStrategy": "Test form validation with invalid inputs (empty name, invalid characters, missing system prompt). Verify validation errors display correctly with zod messages. Test form submission with valid and invalid data. Test loading states during form submission. Verify error alerts display correctly for API errors. Test success feedback after successful operations.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install zod and @hookform/resolvers packages",
+            "description": "Install the required dependencies for form validation with zod and react-hook-form integration",
+            "dependencies": [],
+            "details": "Run npm install zod @hookform/resolvers react-hook-form to add the necessary packages for zod-based validation. Verify installations and update package.json dependencies. These packages will enable zod schema validation with react-hook-form using zodResolver.",
+            "status": "done",
+            "testStrategy": "Verify packages are correctly installed by checking package.json and running npm ls to confirm no dependency conflicts exist"
+          },
+          {
+            "id": 2,
+            "title": "Create zod validation schemas for prompt forms",
+            "description": "Define comprehensive zod schemas for prompt creation and editing validation",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Create src/schemas/prompt.ts with zod schemas for PromptCreate and PromptUpdate interfaces. Include validation for name field (required, alphanumeric with underscores/hyphens only), system_prompt (required, minimum length), description (optional), user_prompt (optional), and tags (array of strings). Export schemas as promptCreateSchema and promptUpdateSchema with appropriate error messages matching existing validation logic.",
+            "status": "done",
+            "testStrategy": "Test schemas with valid and invalid data to ensure proper validation. Verify error messages match expected format and that all edge cases are handled correctly"
+          },
+          {
+            "id": 3,
+            "title": "Integrate react-hook-form with zodResolver in PromptForm",
+            "description": "Replace custom form state management with react-hook-form and zod validation",
+            "dependencies": [
+              "4.2"
+            ],
+            "details": "Refactor PromptForm.tsx to use useForm hook from react-hook-form with zodResolver. Replace useState formData with form register, handleSubmit, and formState. Update input/textarea elements to use register() for field binding. Replace custom validation logic with zod schema validation. Maintain existing functionality for editing vs creating modes, form submission, and error handling.",
+            "status": "done",
+            "testStrategy": "Test form submission with valid and invalid data. Verify all validation errors display correctly and form behaves identically to previous implementation"
+          },
+          {
+            "id": 4,
+            "title": "Implement shadcn Alert components for form feedback",
+            "description": "Replace custom error display with shadcn Alert components for consistent feedback",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Replace the current saveError display in PromptForm.tsx with shadcn Alert component using destructive variant for errors. Add success Alert component for successful form submissions. Update error loading state in PromptForm to use Alert with proper styling. Ensure Alert components use proper icons (AlertCircle for errors, CheckCircle for success) and maintain accessibility attributes.",
+            "status": "done",
+            "testStrategy": "Test error alerts display correctly during form validation failures and API errors. Verify success alerts show after successful form submission. Test keyboard navigation and screen reader compatibility"
+          },
+          {
+            "id": 5,
+            "title": "Replace LoadingSpinner with shadcn loading patterns and update EmptyState",
+            "description": "Modernize loading states and empty state component with shadcn patterns",
+            "dependencies": [
+              "4.4"
+            ],
+            "details": "Add shadcn Skeleton component via shadcn CLI. Replace LoadingSpinner usage in PromptForm with Button component loading state (disabled + spinner). Update form loading state to use Skeleton components for form fields. Enhance EmptyState component to use shadcn styling patterns and proper spacing/typography. Ensure loading patterns are consistent across the application and maintain existing size variations (sm, md, lg).",
+            "status": "done",
+            "testStrategy": "Test loading states during form submission and data fetching. Verify Skeleton components display correctly during loading. Test EmptyState component rendering and interaction. Ensure all loading patterns are accessible and performant"
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-16T14:49:42.192Z",
+      "updated": "2025-08-16T20:03:27.530Z",
+      "description": "Tasks for add-tags-test context"
+    }
+  },
+  "DRI-167-tag-autocomplete": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Add autocomplete functionality to TagInput component",
+        "description": "Enhance the existing TagInput component with autocomplete dropdown that filters and displays matching tags as the user types, supporting both keyboard navigation and mouse selection",
+        "details": "# Implementation Steps\n\n## 1. Install shadcn Popover component\n```bash\nnpx shadcn@latest add popover\n```\nThis will install @radix-ui/react-popover and create the Popover component in src/components/ui/popover.tsx\n\n## 2. Update TagInput.tsx Interface\nAdd `availableTags?: string[]` prop to TagInputProps interface:\n```typescript\ninterface TagInputProps {\n  tags: string[];\n  onChange: (tags: string[]) => void;\n  availableTags?: string[];  // NEW\n  placeholder?: string;\n  className?: string;\n  tagClassName?: string;\n  disabled?: boolean;\n}\n```\n\n## 3. Implement Autocomplete Logic in TagInput.tsx\n\n### State Management\n```typescript\nconst [inputValue, setInputValue] = useState('');\nconst [isDropdownOpen, setIsDropdownOpen] = useState(false);\nconst [highlightedIndex, setHighlightedIndex] = useState(0);\n```\n\n### Filtering Logic\n```typescript\nconst filteredSuggestions = useMemo(() => {\n  if (!availableTags || !inputValue.trim()) return [];\n  \n  const input = inputValue.toLowerCase();\n  return availableTags\n    .filter(tag => \n      !tags.includes(tag) && // exclude already added tags\n      tag.toLowerCase().includes(input) // case-insensitive match\n    )\n    .sort(); // alphabetical order\n}, [availableTags, inputValue, tags]);\n```\n\n### Dropdown Visibility Control\n```typescript\nuseEffect(() => {\n  setIsDropdownOpen(filteredSuggestions.length > 0 && inputValue.length > 0);\n  setHighlightedIndex(0); // reset highlight when suggestions change\n}, [filteredSuggestions, inputValue]);\n```\n\n## 4. Keyboard Navigation Enhancement\n\nUpdate handleKeyDown to support arrow keys and selection:\n```typescript\nconst handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {\n  if (e.key === 'Enter') {\n    e.preventDefault();\n    \n    // If dropdown is open and has suggestions, select highlighted\n    if (isDropdownOpen && filteredSuggestions.length > 0) {\n      addTag(filteredSuggestions[highlightedIndex]);\n      setIsDropdownOpen(false);\n    } else {\n      // Otherwise create new tag from input\n      addTag(inputValue);\n    }\n  } else if (e.key === 'ArrowDown') {\n    e.preventDefault();\n    setHighlightedIndex(prev => \n      Math.min(prev + 1, filteredSuggestions.length - 1)\n    );\n  } else if (e.key === 'ArrowUp') {\n    e.preventDefault();\n    setHighlightedIndex(prev => Math.max(prev - 1, 0));\n  } else if (e.key === 'Escape') {\n    setIsDropdownOpen(false);\n  }\n};\n```\n\n## 5. Suggestion Selection Handler\n```typescript\nconst selectSuggestion = useCallback((tag: string) => {\n  addTag(tag);\n  setIsDropdownOpen(false);\n}, [addTag]);\n```\n\n## 6. UI Implementation with Popover\n\n```typescript\nimport { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';\n\nreturn (\n  <div className=\"space-y-2\">\n    <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>\n      <PopoverTrigger asChild>\n        <Input\n          type=\"text\"\n          value={inputValue}\n          onChange={(e) => setInputValue(e.target.value)}\n          onKeyDown={handleKeyDown}\n          onBlur={handleBlur}\n          placeholder={placeholder}\n          className={className}\n          disabled={disabled}\n        />\n      </PopoverTrigger>\n      \n      <PopoverContent \n        className=\"w-[var(--radix-popover-trigger-width)] p-0\"\n        align=\"start\"\n        onOpenAutoFocus={(e) => e.preventDefault()}\n      >\n        <div className=\"max-h-60 overflow-y-auto\">\n          {filteredSuggestions.map((tag, index) => (\n            <button\n              key={tag}\n              type=\"button\"\n              onClick={() => selectSuggestion(tag)}\n              onMouseEnter={() => setHighlightedIndex(index)}\n              className={`w-full text-left px-3 py-2 text-sm hover:bg-accent cursor-pointer ${\n                index === highlightedIndex ? 'bg-accent' : ''\n              }`}\n            >\n              {tag}\n            </button>\n          ))}\n        </div>\n      </PopoverContent>\n    </Popover>\n    \n    {/* Existing tag pills */}\n    {tags.length > 0 && (\n      <div className=\"flex flex-wrap gap-2\">\n        {tags.map((tag) => (\n          <TagPill\n            key={tag}\n            tag={tag}\n            onRemove={disabled ? undefined : () => removeTag(tag)}\n            className={tagClassName}\n          />\n        ))}\n      </div>\n    )}\n  </div>\n);\n```\n\n## 7. Update PromptForm.tsx to Extract and Pass Available Tags\n\nIn PromptForm.tsx, add before the return statement:\n```typescript\nconst { prompts: allPrompts } = usePrompts();\n\nconst availableTags = useMemo(() => {\n  if (!allPrompts) return [];\n  const allTags = allPrompts.flatMap(p => p.tags || []);\n  return [...new Set(allTags)].sort();\n}, [allPrompts]);\n```\n\nUpdate the TagInput component call:\n```typescript\n<TagInput\n  {...field}\n  tags={field.value}\n  onChange={field.onChange}\n  availableTags={availableTags}  // NEW\n  placeholder=\"Add tags and press Enter...\"\n  className=\"w-full px-3 py-2 border border-strong rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-default\"\n  tagClassName=\"inline-flex items-center gap-1 px-2 py-1 bg-surface-alt text-muted text-sm rounded-full\"\n  disabled={isSubmitting}\n/>\n```\n\n## Edge Cases to Handle\n- Empty input: No dropdown shown\n- No matches: No dropdown shown (user can still create new tag)\n- All tags already added: No dropdown shown\n- Dropdown should close on blur (unless clicking a suggestion)\n- Highlight should reset to 0 when suggestions change",
+        "testStrategy": "# Testing Strategy\n\n## Manual Testing\n\n### 1. Basic Autocomplete Behavior\n- [ ] Type a partial tag name (e.g., \"doc\") → dropdown appears with matching tags\n- [ ] Type a tag that doesn't exist → no dropdown appears\n- [ ] Clear input → dropdown closes\n- [ ] Type 1 character → dropdown appears if matches exist\n\n### 2. Keyboard Navigation\n- [ ] Press ArrowDown → highlight moves to next suggestion\n- [ ] Press ArrowUp → highlight moves to previous suggestion\n- [ ] ArrowDown at last item → stays at last item (no wrap)\n- [ ] ArrowUp at first item → stays at first item (no wrap)\n- [ ] Press Enter with highlighted suggestion → tag added, dropdown closes, input clears\n- [ ] Press Enter with no matches → new tag created from input\n- [ ] Press Escape → dropdown closes\n\n### 3. Mouse Interaction\n- [ ] Hover over suggestion → highlight follows mouse\n- [ ] Click suggestion → tag added, dropdown closes, input clears\n- [ ] Click outside dropdown → dropdown closes (blur behavior)\n\n### 4. Filtering Logic\n- [ ] Case-insensitive matching works (\"DOC\" matches \"documentation\")\n- [ ] Substring matching works (\"doc\" matches \"documentation\")\n- [ ] Already added tags don't appear in suggestions\n- [ ] Suggestions are alphabetically sorted\n\n### 5. Edge Cases\n- [ ] Dropdown positioning correct near bottom of viewport\n- [ ] Works with disabled prop (no dropdown when disabled)\n- [ ] Multiple rapid key presses handled correctly\n- [ ] Fast typing doesn't cause UI flicker\n\n### 6. Integration Testing\n- [ ] PromptForm correctly extracts tags from all prompts\n- [ ] Creating new tags updates available tags on next form load\n- [ ] Tag pills still removable\n- [ ] Form submission includes autocompleted tags\n\n## Performance Testing\n- [ ] Test with 100+ unique tags → filtering remains responsive\n- [ ] No unnecessary re-renders when typing\n\n## Browser Compatibility\n- [ ] Test in Chrome, Firefox, Safari\n- [ ] Keyboard navigation works in all browsers\n- [ ] Popover positioning correct in all browsers",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-12-04T01:17:32.069Z",
+      "updated": "2025-12-04T01:18:59.086Z",
+      "description": "Tasks for DRI-167-tag-autocomplete context"
+    }
+  }
+}

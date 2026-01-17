@@ -2,10 +2,8 @@
 obsidian/*
 docs/prds/*
 
-# Taskmaster
-.taskmaster/tasks/*
-.taskmaster/state.json
-tasks/
+# Worktrees
+.worktrees/
 
 # Logs
 logs
