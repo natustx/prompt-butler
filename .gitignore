@@ -22,7 +22,7 @@ node_modules/
 .idea
 .vscode
 *.suo
-*.ntvs*
+*.ntvs*t
 *.njsproj
 *.sln
 *.sw?
@@ -30,3 +30,9 @@ node_modules/
 .DS_Store
 
 
+
+# bv (beads viewer) local config and caches
+.bv/
+
+# Git worktrees (managed by wt command)
+.worktrees/

@@ -9,6 +9,7 @@ class Prompt(BaseModel):
     description: str = Field('', description="Brief description of the prompt's purpose")
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: str = Field('', description='User prompt template or example')
+    group: str = Field('', description='Group name for organizing prompts')
     tags: list[str] = Field(default_factory=list, description='List of tags for categorizing the prompt')
 
     @field_validator('name')
@@ -16,6 +17,13 @@ class Prompt(BaseModel):
     def validate_name(cls, v: str) -> str:
         if not re.match(r'^[a-zA-Z0-9_-]+$', v):
             raise ValueError('Name must contain only alphanumeric characters, underscores, and hyphens')
+        return v
+
+    @field_validator('group')
+    @classmethod
+    def validate_group(cls, v: str) -> str:
+        if v and not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError('Group must contain only alphanumeric characters, underscores, and hyphens')
         return v
 
     model_config = {

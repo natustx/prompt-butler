@@ -10,7 +10,7 @@
 Use `bd` for issue tracking instead of markdown TODOs.
 
 ## Essential workflow
-Only engage the Beads workflow after the user explicitly asks to use Beads for the current work. Once the user requests Beads, the very first step is to confirm your agent identity by asking: "What name should I use as my agent identity for beads?" Do NOT proceed (or use generic names like "Claude") until they answer.
+Only engage the Beads workflow after the user explicitly asks to use Beads for the current work. For agent identity, use the `beads-work` skill which auto-generates a unique name.
 
 **NOTE:** `bd list --status` does NOT support comma-separated values. Query each status separately.
 
@@ -42,11 +42,14 @@ When exiting plan mode, write the plan to Beads instead of a markdown file:
 3. Set dependencies: `bd dep add <task-id> <blocked-by-id>`
 4. Verify structure: `bd dep tree <epic-id>`
 
-## Session end checklist
-Before stopping a session:
-1. File issues for any remaining/discovered work
+## Completing a feature or session
+
+**IMPORTANT:** Before stopping a session, after completing a feature, or after doing cleanup on beads, you MUST:
+1. File issues as beads for any remaining/discovered work
 2. Update issue statuses to reflect current state
 3. Run `bd sync` to sync beads changes
+
+**This last command MUST succeed in order for you to be done**. If it doesn't work, stop what you are doing and alert the users with specifics around what is wrong
 
 <!-- END /Users/me/prj/agent-config/rules/optional/beads.md -->
 
@@ -78,9 +81,7 @@ Example of correct sequence:
 - writing-tests: NO - not relevant
 - frontend-design: NO - not relevant
 
-[Then IMMEDIATELY use Skill() tool:]
-> Skill(systematic-debugging)
-> Skill(writing-tests)  // if also relevant
+[Then IMMEDIATELY invoke the skills]
 
 [THEN and ONLY THEN start implementation]
 </INSTRUCTION>
@@ -89,3 +90,29 @@ Example of correct sequence:
 <!-- END /Users/me/prj/agent-config/rules/optional/mandatory-skill-activation.md -->
 
 <!-- agent-config:rules:end -->
+
+## Landing the Plane (Session Completion)
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd sync
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
