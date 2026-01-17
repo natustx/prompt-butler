@@ -19,10 +19,10 @@ from prompt_butler.services.storage import (
     storage_service,
 )
 
-router = APIRouter(prefix='/api/prompts', tags=['prompts'], responses={404: {'description': 'Prompt not found'}})
+router = APIRouter(prefix='/api', tags=['prompts'], responses={404: {'description': 'Prompt not found'}})
 
 
-@router.get('/', response_model=list[PromptResponse])
+@router.get('/prompts', response_model=list[PromptResponse])
 async def list_prompts(group: str | None = Query(None, description='Filter by group')):
     """List all available prompts with full details."""
     try:
@@ -31,7 +31,7 @@ async def list_prompts(group: str | None = Query(None, description='Filter by gr
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.get('/groups', response_model=list[str])
+@router.get('/groups', response_model=list[str], tags=['groups'])
 async def list_groups():
     """List all available groups."""
     try:
@@ -40,7 +40,7 @@ async def list_groups():
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.get('/tags', response_model=list[TagWithCount])
+@router.get('/tags', response_model=list[TagWithCount], tags=['tags'])
 async def list_tags():
     """List all tags with their usage counts."""
     try:
@@ -50,7 +50,7 @@ async def list_tags():
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.post('/tags/rename', response_model=TagRenameResponse)
+@router.post('/tags/rename', response_model=TagRenameResponse, tags=['tags'])
 async def rename_tag(request: TagRenameRequest):
     """Rename a tag across all prompts."""
     try:
@@ -60,7 +60,7 @@ async def rename_tag(request: TagRenameRequest):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.post('/groups/rename', response_model=GroupRenameResponse)
+@router.post('/groups/rename', response_model=GroupRenameResponse, tags=['groups'])
 async def rename_group(request: GroupRenameRequest):
     """Rename a group by moving all prompts to the new group."""
     try:
@@ -74,7 +74,7 @@ async def rename_group(request: GroupRenameRequest):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.post('/', response_model=PromptResponse, status_code=status.HTTP_201_CREATED)
+@router.post('/prompts', response_model=PromptResponse, status_code=status.HTTP_201_CREATED)
 async def create_prompt(prompt_data: PromptCreate):
     """Create a new prompt."""
     prompt = Prompt(
@@ -83,7 +83,7 @@ async def create_prompt(prompt_data: PromptCreate):
         system_prompt=prompt_data.system_prompt,
         user_prompt=prompt_data.user_prompt or '',
         tags=prompt_data.tags or [],
-        group=prompt_data.group or 'default',
+        group=prompt_data.group or '',
     )
 
     try:
@@ -94,7 +94,19 @@ async def create_prompt(prompt_data: PromptCreate):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.get('/{group}/{name}', response_model=PromptResponse)
+@router.get('/prompts/{name}', response_model=PromptResponse)
+async def get_prompt_by_name(name: str, group: str | None = Query(None, description='Optional group name')):
+    """Get a specific prompt by name and optional group."""
+    prompt = storage_service.get(name, group=group)
+    if prompt is None:
+        group_label = group or 'ungrouped'
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f'Prompt "{name}" not found in group "{group_label}"'
+        )
+    return prompt
+
+
+@router.get('/prompts/{group}/{name}', response_model=PromptResponse)
 async def get_prompt(group: str, name: str):
     """Get a specific prompt by group and name."""
     prompt = storage_service.get(name, group=group)
@@ -105,7 +117,28 @@ async def get_prompt(group: str, name: str):
     return prompt
 
 
-@router.put('/{group}/{name}', response_model=PromptResponse)
+@router.put('/prompts/{name}', response_model=PromptResponse)
+async def update_prompt_by_name(
+    name: str,
+    prompt_update: PromptUpdate,
+    group: str | None = Query(None, description='Optional group name'),
+):
+    """Update an existing prompt by name and optional group."""
+    update_data = prompt_update.model_dump(exclude_unset=True)
+
+    try:
+        updated_prompt = storage_service.update(name, group or '', **update_data)
+        if updated_prompt is None:
+            group_label = group or 'ungrouped'
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f'Prompt "{name}" not found in group "{group_label}"'
+            )
+        return updated_prompt
+    except StorageError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+
+@router.put('/prompts/{group}/{name}', response_model=PromptResponse)
 async def update_prompt(group: str, name: str, prompt_update: PromptUpdate):
     """Update an existing prompt."""
     update_data = prompt_update.model_dump(exclude_unset=True)
@@ -121,7 +154,17 @@ async def update_prompt(group: str, name: str, prompt_update: PromptUpdate):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
-@router.delete('/{group}/{name}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/prompts/{name}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_prompt_by_name(name: str, group: str | None = Query(None, description='Optional group name')):
+    """Delete a prompt by name and optional group."""
+    if not storage_service.delete(name, group=group):
+        group_label = group or 'ungrouped'
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f'Prompt "{name}" not found in group "{group_label}"'
+        )
+
+
+@router.delete('/prompts/{group}/{name}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_prompt(group: str, name: str):
     """Delete a prompt."""
     if not storage_service.delete(name, group=group):

@@ -82,12 +82,12 @@ class MigrationService:
         except (yaml.YAMLError, OSError, ValueError):
             return None
 
-    def migrate_prompt(self, yaml_path: Path, default_group: str = 'default') -> tuple[bool, str]:
+    def migrate_prompt(self, yaml_path: Path, default_group: str = '') -> tuple[bool, str]:
         """Migrate a single YAML prompt to markdown format.
 
         Args:
             yaml_path: Path to the YAML file
-            default_group: Group to use if prompt has no group set
+            default_group: Group to use if prompt has no group set (empty for ungrouped)
 
         Returns:
             Tuple of (success, message)
@@ -115,11 +115,11 @@ class MigrationService:
         except Exception as e:
             return False, f'Failed to create: {prompt.name} - {e}'
 
-    def migrate_all(self, default_group: str = 'default', remove_source: bool = False) -> MigrationResult:
+    def migrate_all(self, default_group: str = '', remove_source: bool = False) -> MigrationResult:
         """Migrate all YAML prompts to markdown format.
 
         Args:
-            default_group: Group to use for prompts without a group
+            default_group: Group to use for prompts without a group (empty for ungrouped)
             remove_source: If True, remove YAML files after successful migration
 
         Returns:

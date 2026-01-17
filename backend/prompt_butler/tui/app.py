@@ -556,7 +556,7 @@ class AddEditPromptScreen(Screen):
                 yield Label('Group', classes='field-label')
                 yield Static('Organize prompts into folders', classes='field-hint')
                 yield Input(
-                    value=self.prompt.group if self.prompt else 'default',
+                    value=self.prompt.group if self.prompt else '',
                     placeholder='e.g., development',
                     id='group-input',
                 )
@@ -622,7 +622,7 @@ class AddEditPromptScreen(Screen):
     def _do_save(self) -> None:
         """Perform the save operation."""
         name = self.query_one('#name-input', Input).value.strip()
-        group = self.query_one('#group-input', Input).value.strip() or 'default'
+        group = self.query_one('#group-input', Input).value.strip()
         description = self.query_one('#description-input', Input).value.strip()
         tags_str = self.query_one('#tags-input', Input).value.strip()
         system_prompt = self.query_one('#system-prompt-area', TextArea).text.strip()
@@ -663,7 +663,8 @@ class AddEditPromptScreen(Screen):
             self.app.action_refresh()
             self.app.pop_screen()
         except PromptExistsError:
-            self._update_status(f'[red]Error: Prompt "{name}" already exists in group "{group}"[/]')
+            group_label = group or 'ungrouped'
+            self._update_status(f'[red]Error: Prompt "{name}" already exists in group "{group_label}"[/]')
         except ValueError as e:
             self._update_status(f'[red]Error: {e}[/]')
         except Exception as e:

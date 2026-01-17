@@ -19,10 +19,10 @@ import { promptFormSchema, type PromptFormInput } from '../schemas/prompt';
 import type { PromptCreate, PromptUpdate } from '../types/prompt';
 
 export function PromptForm() {
-  const { group, name } = useParams<{ group: string; name: string }>();
+  const { group, name } = useParams<{ group?: string; name?: string }>();
   const navigate = useNavigate();
-  const isEditing = Boolean(group && name);
-  const decodedGroup = group ? decodeURIComponent(group) : undefined;
+  const isEditing = Boolean(name);
+  const decodedGroup = group ? decodeURIComponent(group) : '';
   const decodedName = name ? decodeURIComponent(name) : undefined;
 
   const { prompt, loading, error, saveError, createPrompt, updatePrompt } = usePrompt(decodedGroup, decodedName);
@@ -37,7 +37,7 @@ export function PromptForm() {
       system_prompt: '',
       user_prompt: '',
       tags: [],
-      group: 'default',
+      group: '',
     },
   });
 
@@ -52,7 +52,7 @@ export function PromptForm() {
         system_prompt: prompt.system_prompt,
         user_prompt: prompt.user_prompt || '',
         tags: prompt.tags || [],
-        group: prompt.group || 'default',
+        group: prompt.group || '',
       });
     }
   }, [prompt, isEditing, reset]);
@@ -61,14 +61,14 @@ export function PromptForm() {
     try {
       setSubmitError(null);
 
-      if (isEditing && decodedGroup && decodedName) {
+      if (isEditing && decodedName) {
         const updateData: PromptUpdate = {
           description: data.description.trim() || undefined,
           system_prompt: data.system_prompt,
           user_prompt: data.user_prompt.trim() || undefined,
           tags: data.tags.length > 0 ? data.tags : undefined,
         };
-        await updatePrompt(decodedGroup, decodedName, updateData);
+        await updatePrompt(decodedGroup || undefined, decodedName, updateData);
       } else {
         const createData: PromptCreate = {
           name: data.name,
@@ -76,7 +76,7 @@ export function PromptForm() {
           system_prompt: data.system_prompt,
           user_prompt: data.user_prompt.trim() || undefined,
           tags: data.tags.length > 0 ? data.tags : undefined,
-          group: data.group || 'default',
+          group: data.group.trim() || undefined,
         };
         await createPrompt(createData);
       }
@@ -158,7 +158,7 @@ export function PromptForm() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-[var(--terminal-green)] crt-glow tracking-wider">
-          &gt; {isEditing ? `EDIT: ${decodedGroup}/${decodedName}` : 'NEW_PROMPT'}
+          &gt; {isEditing ? `EDIT: ${decodedGroup || 'ungrouped'}/${decodedName}` : 'NEW_PROMPT'}
         </h1>
       </div>
 
@@ -171,7 +171,7 @@ export function PromptForm() {
           <div className="p-6 space-y-6">
             <div>
               <Label htmlFor="group" className="block text-sm font-medium mb-2">
-                GROUP *
+                GROUP
               </Label>
               <Controller
                 name="group"

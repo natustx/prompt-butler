@@ -17,7 +17,7 @@ class Config(BaseModel):
     """Application configuration."""
 
     prompts_dir: str = Field(default='~/.prompts', description='Directory for storing prompts')
-    default_group: str = Field(default='default', description='Default group for new prompts')
+    default_group: str = Field(default='', description='Default group for new prompts (empty for ungrouped)')
     editor: str = Field(default='', description='Preferred editor (overrides $EDITOR)')
 
     def get_prompts_dir(self) -> Path:

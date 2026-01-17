@@ -28,7 +28,7 @@ class TestConfig:
     def test_default_values(self):
         config = Config()
         assert config.prompts_dir == '~/.prompts'
-        assert config.default_group == 'default'
+        assert config.default_group == ''
         assert config.editor == ''
 
     def test_custom_values(self):

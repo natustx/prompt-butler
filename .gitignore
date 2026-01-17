@@ -30,3 +30,8 @@ node_modules/
 .DS_Store
 
 
+
+# bv (beads viewer) local config and caches
+.bv/
+
+.ralph-tui

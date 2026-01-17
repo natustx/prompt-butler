@@ -27,7 +27,7 @@ class PromptStorage:
         ---user---
         User prompt content here...
 
-    Folder structure: ~/.prompts/{group}/name.md
+    Folder structure: ~/.prompts/{group}/name.md (or ~/.prompts/name.md for ungrouped)
     """
 
     def __init__(self, prompts_dir: str | Path | None = None):
@@ -48,12 +48,18 @@ class PromptStorage:
 
     def _get_group_dir(self, group: str) -> Path:
         """Get the directory path for a group."""
+        if not group:
+            return self.prompts_dir
         return self.prompts_dir / self.slugify(group)
 
     def _get_prompt_path(self, name: str, group: str) -> Path:
         """Get the file path for a prompt."""
         group_dir = self._get_group_dir(group)
         return group_dir / f'{self.slugify(name)}.md'
+
+    @staticmethod
+    def _normalize_group(group: str | None) -> str:
+        return group or ''
 
     def _parse_content(self, content: str) -> tuple[str, str]:
         """Parse markdown content into system_prompt and user_prompt.
@@ -103,14 +109,27 @@ class PromptStorage:
         """
         prompts = []
 
-        if group:
-            group_dir = self._get_group_dir(group)
-            if group_dir.exists():
-                for file_path in group_dir.glob('*.md'):
-                    prompt = self._prompt_from_file(file_path, group)
+        normalized_group = self._normalize_group(group)
+
+        if group is not None:
+            if normalized_group:
+                group_dir = self._get_group_dir(normalized_group)
+                if group_dir.exists():
+                    for file_path in group_dir.glob('*.md'):
+                        prompt = self._prompt_from_file(file_path, normalized_group)
+                        if prompt:
+                            prompts.append(prompt)
+            else:
+                for file_path in self.prompts_dir.glob('*.md'):
+                    prompt = self._prompt_from_file(file_path, '')
                     if prompt:
                         prompts.append(prompt)
         else:
+            for file_path in self.prompts_dir.glob('*.md'):
+                prompt = self._prompt_from_file(file_path, '')
+                if prompt:
+                    prompts.append(prompt)
+
             for group_dir in self.prompts_dir.iterdir():
                 if group_dir.is_dir():
                     group_name = group_dir.name
@@ -121,20 +140,21 @@ class PromptStorage:
 
         return sorted(prompts, key=lambda p: (p.group, p.name))
 
-    def get(self, name: str, group: str = 'default') -> Prompt | None:
+    def get(self, name: str, group: str | None = None) -> Prompt | None:
         """Get a prompt by name and group.
 
         Args:
             name: The prompt name.
-            group: The group name (default: 'default').
+            group: The group name (empty for ungrouped).
 
         Returns:
             The Prompt if found, None otherwise.
         """
-        file_path = self._get_prompt_path(name, group)
+        normalized_group = self._normalize_group(group)
+        file_path = self._get_prompt_path(name, normalized_group)
         if not file_path.exists():
             return None
-        return self._prompt_from_file(file_path, group)
+        return self._prompt_from_file(file_path, normalized_group)
 
     def create(self, prompt: Prompt) -> Prompt:
         """Create a new prompt.
@@ -205,17 +225,18 @@ class PromptStorage:
 
         return updated_prompt
 
-    def delete(self, name: str, group: str = 'default') -> bool:
+    def delete(self, name: str, group: str | None = None) -> bool:
         """Delete a prompt.
 
         Args:
             name: The prompt name.
-            group: The group name (default: 'default').
+            group: The group name (empty for ungrouped).
 
         Returns:
             True if deleted, False if not found.
         """
-        file_path = self._get_prompt_path(name, group)
+        normalized_group = self._normalize_group(group)
+        file_path = self._get_prompt_path(name, normalized_group)
         if not file_path.exists():
             return False
 
@@ -227,17 +248,18 @@ class PromptStorage:
 
         return True
 
-    def exists(self, name: str, group: str = 'default') -> bool:
+    def exists(self, name: str, group: str | None = None) -> bool:
         """Check if a prompt exists.
 
         Args:
             name: The prompt name.
-            group: The group name (default: 'default').
+            group: The group name (empty for ungrouped).
 
         Returns:
             True if exists, False otherwise.
         """
-        file_path = self._get_prompt_path(name, group)
+        normalized_group = self._normalize_group(group)
+        file_path = self._get_prompt_path(name, normalized_group)
         return file_path.exists()
 
     def list_groups(self, include_empty: bool = False) -> list[str]:

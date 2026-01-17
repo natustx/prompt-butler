@@ -698,7 +698,7 @@ class TestAddEditFormValidation:
             save_btn = app.screen.query_one('#save-btn', Button)
             await pilot.click(save_btn)
             await pilot.pause()
-            prompt = storage.get('test-prompt', 'default')
+            prompt = storage.get('test-prompt', '')
             assert prompt is not None
             assert prompt.tags == ['tag1', 'tag2', 'tag3']
 

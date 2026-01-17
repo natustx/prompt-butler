@@ -178,7 +178,7 @@ class TestMigrationServiceMigratePrompt:
         assert success is True
         assert 'Migrated' in message
 
-        md_path = target_dir / 'default' / 'test-prompt.md'
+        md_path = target_dir / 'test-prompt.md'
         assert md_path.exists()
 
         content = md_path.read_text()
@@ -194,7 +194,7 @@ class TestMigrationServiceMigratePrompt:
 
         assert success is True
 
-        md_path = target_dir / 'default' / 'system-only.md'
+        md_path = target_dir / 'system-only.md'
         content = md_path.read_text()
         assert 'Only system' in content
         assert '---user---' not in content
@@ -248,9 +248,9 @@ class TestMigrationServiceMigrateAll:
         assert result.success_count == 3
         assert result.failure_count == 0
         assert result.skipped_count == 0
-        assert (target_dir / 'default' / 'prompt1.md').exists()
-        assert (target_dir / 'default' / 'prompt2.md').exists()
-        assert (target_dir / 'default' / 'prompt3.md').exists()
+        assert (target_dir / 'prompt1.md').exists()
+        assert (target_dir / 'prompt2.md').exists()
+        assert (target_dir / 'prompt3.md').exists()
 
     def test_returns_empty_result_for_no_prompts(self, migration_service):
         result = migration_service.migrate_all()

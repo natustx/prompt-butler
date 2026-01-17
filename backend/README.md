@@ -40,7 +40,7 @@ pip install -e .
 pip install -e ".[dev]"  # For development dependencies
 
 # Start development server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn prompt_butler.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## Configuration

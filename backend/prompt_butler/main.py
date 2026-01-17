@@ -1,9 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from prompt_butler.routers import prompts
 from prompt_butler.services.storage import InvalidPromptDataError, PromptNotFoundError, StorageError
@@ -36,6 +38,8 @@ app.add_middleware(
 
 app.include_router(prompts.router)
 
+frontend_dist = Path(__file__).resolve().parents[2] / 'frontend' / 'dist'
+
 
 @app.exception_handler(PromptNotFoundError)
 async def prompt_not_found_handler(request, exc: PromptNotFoundError):
@@ -54,12 +58,17 @@ async def storage_error_handler(request, exc: StorageError):
 
 @app.get('/')
 async def root():
+    if frontend_dist.exists():
+        return FileResponse(frontend_dist / 'index.html')
     return {'status': 'healthy', 'service': 'Prompt Butler API', 'version': '1.0.0'}
 
 
 @app.get('/health')
 async def health_check():
     return {'status': 'healthy', 'service': 'Prompt Butler API'}
+
+if frontend_dist.exists():
+    app.mount('/', StaticFiles(directory=frontend_dist, html=True), name='static')
 
 
 if __name__ == '__main__':

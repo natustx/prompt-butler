@@ -7,6 +7,13 @@ import { TagPill } from '../components/TagPill';
 import { DeletePromptDialog } from '../components/DeletePromptDialog';
 import { Button } from '@/components/ui/button';
 
+const buildEditPath = (group: string, name: string) => {
+  if (group) {
+    return `/edit/${encodeURIComponent(group)}/${encodeURIComponent(name)}`;
+  }
+  return `/edit/${encodeURIComponent(name)}`;
+};
+
 export function PromptList() {
   const { prompts, loading, error, refetch, deletePrompt } = usePrompts();
 
@@ -109,7 +116,7 @@ export function PromptList() {
                           className="text-[var(--terminal-amber)] hover:text-[var(--terminal-amber)] hover:bg-[var(--terminal-amber)]/10"
                         >
                           <Link
-                            to={`/edit/${encodeURIComponent(prompt.group)}/${encodeURIComponent(prompt.name)}`}
+                            to={buildEditPath(prompt.group, prompt.name)}
                             title="Edit prompt"
                           >
                             <Edit className="h-4 w-4" />

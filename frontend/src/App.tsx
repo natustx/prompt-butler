@@ -10,6 +10,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<PromptList />} />
           <Route path="new" element={<PromptForm />} />
+          <Route path="edit/:name" element={<PromptForm />} />
           <Route path="edit/:group/:name" element={<PromptForm />} />
         </Route>
       </Routes>

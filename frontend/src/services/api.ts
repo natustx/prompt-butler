@@ -55,23 +55,22 @@ export const promptApi = {
   // List all prompts
   async listPrompts(group?: string): Promise<Prompt[]> {
     const url = group
-      ? `${API_BASE_URL}/api/prompts/?group=${encodeURIComponent(group)}`
-      : `${API_BASE_URL}/api/prompts/`;
+      ? `${API_BASE_URL}/api/prompts?group=${encodeURIComponent(group)}`
+      : `${API_BASE_URL}/api/prompts`;
     const response = await fetch(url);
     return handleResponse<Prompt[]>(response);
   },
 
   // Get a specific prompt
-  async getPrompt(group: string, name: string): Promise<Prompt> {
-    const response = await fetch(
-      `${API_BASE_URL}/api/prompts/${encodeURIComponent(group)}/${encodeURIComponent(name)}`
-    );
+  async getPrompt(group: string | undefined, name: string): Promise<Prompt> {
+    const query = group ? `?group=${encodeURIComponent(group)}` : '';
+    const response = await fetch(`${API_BASE_URL}/api/prompts/${encodeURIComponent(name)}${query}`);
     return handleResponse<Prompt>(response);
   },
 
   // Create a new prompt
   async createPrompt(prompt: PromptCreate): Promise<Prompt> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/`, {
+    const response = await fetch(`${API_BASE_URL}/api/prompts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,46 +81,42 @@ export const promptApi = {
   },
 
   // Update an existing prompt
-  async updatePrompt(group: string, name: string, updates: PromptUpdate): Promise<Prompt> {
-    const response = await fetch(
-      `${API_BASE_URL}/api/prompts/${encodeURIComponent(group)}/${encodeURIComponent(name)}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      }
-    );
+  async updatePrompt(group: string | undefined, name: string, updates: PromptUpdate): Promise<Prompt> {
+    const query = group ? `?group=${encodeURIComponent(group)}` : '';
+    const response = await fetch(`${API_BASE_URL}/api/prompts/${encodeURIComponent(name)}${query}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
     return handleResponse<Prompt>(response);
   },
 
   // Delete a prompt
-  async deletePrompt(group: string, name: string): Promise<void> {
-    const response = await fetch(
-      `${API_BASE_URL}/api/prompts/${encodeURIComponent(group)}/${encodeURIComponent(name)}`,
-      {
-        method: 'DELETE',
-      }
-    );
+  async deletePrompt(group: string | undefined, name: string): Promise<void> {
+    const query = group ? `?group=${encodeURIComponent(group)}` : '';
+    const response = await fetch(`${API_BASE_URL}/api/prompts/${encodeURIComponent(name)}${query}`, {
+      method: 'DELETE',
+    });
     return handleResponse<void>(response);
   },
 
   // List all groups
   async listGroups(): Promise<string[]> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/groups`);
+    const response = await fetch(`${API_BASE_URL}/api/groups`);
     return handleResponse<string[]>(response);
   },
 
   // List all tags with counts
   async listTags(): Promise<TagWithCount[]> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/tags`);
+    const response = await fetch(`${API_BASE_URL}/api/tags`);
     return handleResponse<TagWithCount[]>(response);
   },
 
   // Rename a tag
   async renameTag(request: TagRenameRequest): Promise<TagRenameResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/tags/rename`, {
+    const response = await fetch(`${API_BASE_URL}/api/tags/rename`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -133,7 +128,7 @@ export const promptApi = {
 
   // Rename a group
   async renameGroup(request: GroupRenameRequest): Promise<GroupRenameResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/prompts/groups/rename`, {
+    const response = await fetch(`${API_BASE_URL}/api/groups/rename`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

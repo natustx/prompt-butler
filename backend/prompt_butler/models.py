@@ -10,7 +10,7 @@ class Prompt(BaseModel):
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: str = Field('', description='User prompt template or example')
     tags: list[str] = Field(default_factory=list, description='List of tags for categorizing the prompt')
-    group: str = Field('default', description='Group/folder for organizing prompts')
+    group: str = Field('', description='Group/folder for organizing prompts (empty for ungrouped)')
 
     @field_validator('name')
     @classmethod
@@ -41,7 +41,7 @@ class PromptCreate(BaseModel):
     system_prompt: str = Field(..., description='System prompt to set AI context and behavior')
     user_prompt: Optional[str] = Field('', description='User prompt template or example')
     tags: Optional[list[str]] = Field(default_factory=list, description='List of tags for categorizing the prompt')
-    group: Optional[str] = Field('default', description='Group/folder for organizing prompts')
+    group: Optional[str] = Field('', description='Group/folder for organizing prompts (empty for ungrouped)')
 
     @field_validator('name')
     @classmethod

@@ -20,7 +20,7 @@ tasks:
     deps:
       - backend:setup
     cmds:
-      - ../.venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
+      - ../.venv/bin/uvicorn prompt_butler.main:app --reload --host 0.0.0.0 --port 8000
 
   frontend:setup:
     desc: Setup frontend and install dependencies
@@ -36,6 +36,44 @@ tasks:
       - frontend:setup
     cmds:
       - npm run dev
+
+  backend:test:
+    desc: Run backend tests
+    cmds:
+      - .venv/bin/pytest backend/tests -v --tb=short
+
+  backend:lint:
+    desc: Run backend linting (ruff)
+    cmds:
+      - .venv/bin/ruff check backend
+
+  frontend:build:
+    desc: Build frontend for production
+    dir: frontend
+    cmds:
+      - npm run build
+
+  frontend:lint:
+    desc: Run frontend linting (eslint)
+    dir: frontend
+    cmds:
+      - npm run lint
+
+  test:
+    desc: Run all tests
+    cmds:
+      - task: backend:test
+
+  lint:
+    desc: Run all linters
+    cmds:
+      - task: backend:lint
+      - task: frontend:lint
+
+  build:
+    desc: Build all components
+    cmds:
+      - task: frontend:build
 
   dev:
     desc: Start all development servers in parallel

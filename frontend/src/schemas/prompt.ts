@@ -33,7 +33,7 @@ export const promptFormSchema = z.object({
   system_prompt: z.string().min(1, 'System prompt is required'),
   user_prompt: z.string(),
   tags: z.array(z.string()),
-  group: z.string().min(1, 'Group is required'),
+  group: z.string().optional(),
 });
 
 // Type inference from schemas
