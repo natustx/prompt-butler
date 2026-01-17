@@ -1,6 +1,6 @@
 # Prompt Butler Design
 
-Rename Prompt Manager → Prompt Butler. Add CLI (`pb`) + TUI + terminal-styled web app.
+Finalize Prompt Butler naming. Add CLI (`pb`) + TUI + terminal-styled web app.
 
 ## Core Decisions
 
@@ -205,7 +205,7 @@ tasks:
 
 ## Implementation Order
 
-1. Rename + restructure (Prompt Manager → Prompt Butler)
+1. Rename + restructure (Prompt Butler)
 2. Storage service (markdown w/ frontmatter, groups)
 3. Migration command (`pb migrate`), delete YAML code
 4. CLI core (`pb add/list/show/edit/delete/copy/clone`)

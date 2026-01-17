@@ -4,6 +4,7 @@ export interface Prompt {
   system_prompt: string;
   user_prompt: string;
   tags: string[];
+  group: string;
 }
 
 export interface PromptCreate {
@@ -12,6 +13,7 @@ export interface PromptCreate {
   system_prompt: string;
   user_prompt?: string;
   tags?: string[];
+  group?: string;
 }
 
 export interface PromptUpdate {
@@ -19,6 +21,17 @@ export interface PromptUpdate {
   system_prompt?: string;
   user_prompt?: string;
   tags?: string[];
+  group?: string;
+}
+
+export interface GroupCount {
+  group: string;
+  count: number;
+}
+
+export interface TagCount {
+  tag: string;
+  count: number;
 }
 
 export interface ErrorResponse {

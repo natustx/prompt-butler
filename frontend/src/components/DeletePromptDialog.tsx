@@ -23,14 +23,26 @@ interface DeletePromptDialogProps {
 }
 
 export function DeletePromptDialog({ promptName, onDelete, children }: DeletePromptDialogProps) {
+  const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (isDeleting) {
+      return;
+    }
+    if (!nextOpen) {
+      setDeleteError(null);
+    }
+    setOpen(nextOpen);
+  };
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
       setDeleteError(null);
       await onDelete(promptName);
+      setOpen(false);
     } catch (error) {
       handleApiError(error, 'delete prompt', setDeleteError);
     } finally {
@@ -39,15 +51,15 @@ export function DeletePromptDialog({ promptName, onDelete, children }: DeletePro
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>
         {children}
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-surface max-w-md">
         <AlertDialogHeader className="text-left">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <Trash2 className="h-5 w-5 text-red-600" />
+            <div className="flex-shrink-0 w-10 h-10 bg-surface-alt border border-destructive flex items-center justify-center">
+              <Trash2 className="h-5 w-5 text-destructive" />
             </div>
             <AlertDialogTitle className="text-lg font-semibold text-default">
               Delete Prompt
@@ -71,7 +83,10 @@ export function DeletePromptDialog({ promptName, onDelete, children }: DeletePro
           )}
         </AlertDialogDescription>
         <AlertDialogFooter className="space-x-3">
-          <AlertDialogCancel className="text-muted hover:text-default border-strong hover:bg-surface-alt">
+          <AlertDialogCancel
+            className="text-muted hover:text-default border-strong hover:bg-surface-alt"
+            disabled={isDeleting}
+          >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction

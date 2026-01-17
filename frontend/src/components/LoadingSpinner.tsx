@@ -7,18 +7,21 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({ size = 'md', className = '' }: LoadingSpinnerProps) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6', 
-    lg: 'h-8 w-8',
+    sm: 'h-4 w-4 border',
+    md: 'h-6 w-6 border-2',
+    lg: 'h-8 w-8 border-2',
   };
 
   return (
-    <div 
+    <div
       className={cn(
-        'animate-spin rounded-full border-2 border-muted border-t-primary',
+        'animate-spin border-muted-foreground/30 border-t-primary',
         sizeClasses[size],
         className
       )}
+      style={{
+        boxShadow: '0 0 10px rgba(0, 255, 0, 0.2)',
+      }}
     >
       <span className="sr-only">Loading...</span>
     </div>
