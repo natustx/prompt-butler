@@ -3,7 +3,6 @@
 
 agent-rules:
   include:
-  - beads
   - mandatory-skill-activation
   exclude: []
 mcp-servers:
