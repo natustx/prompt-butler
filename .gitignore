@@ -34,3 +34,6 @@ node_modules/
 
 # Beads issue tracking (local state)
 .beads/
+
+# Plans
+docs/plans/
