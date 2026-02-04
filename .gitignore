@@ -37,3 +37,6 @@ node_modules/
 
 # Plans
 docs/plans/
+
+# Local agent rules (managed by agent-sync)
+.agents-local.md

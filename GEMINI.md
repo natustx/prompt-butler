@@ -3,6 +3,8 @@
 ## General Rules
 
 <!-- agent-config:rules:start -->
-@/Users/me/prj/agent-config/rules/optional/beads.md
-@/Users/me/prj/agent-config/rules/optional/mandatory-skill-activation.md
+<important>
+You MUST read the following file before doing anything else:
+@.agents-local.md
+</important>
 <!-- agent-config:rules:end -->
